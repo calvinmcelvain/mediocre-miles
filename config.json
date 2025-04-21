@@ -1,0 +1,16 @@
+{
+  "env": {
+    "client_id": "STRAVA_CLIENT_ID",
+    "client_secret": "STRAVA_CLIENT_SECRET",
+    "access_token": "STRAVA_ACCESS_TOKEN",
+    "refresh_token": "STRAVA_REFRESH_TOKEN",
+    "code": "STRAVA_AUTH_CODE"
+  },
+  "routes": {
+    "auth": "http://localhost:8000"
+  },
+  "paths": {
+    "env": "dotfiles/mediocre_miles.env",
+    "data": "data/strava_data.csv"
+  }
+}
