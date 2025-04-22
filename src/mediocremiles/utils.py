@@ -9,7 +9,6 @@ from pathlib import Path
 
 # third-party.
 from dotenv import load_dotenv
-from flask import current_app
 
 
 log = logging.getLogger(__name__)
@@ -55,11 +54,9 @@ def create_directory(path: Path) -> None:
     try:
         if not path.exists():
             path.mkdir(exist_ok=True, parents=True)
-            if current_app:
-                current_app.logger.info(f"PATH: Created directory: {path.as_posix()}")
+            log.info(f"PATH: Created directory: {path.as_posix()}")
         else:
-            if current_app:
-                current_app.logger.info(f"PATH: Path exists: {path.as_posix()}")
+            log.info(f"PATH: Path exists: {path.as_posix()}")
     except Exception as e:
         log.error(f"Error creating directory '{path}': {e}")
         raise
