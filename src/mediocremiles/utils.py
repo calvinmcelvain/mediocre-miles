@@ -1,20 +1,35 @@
 """
-Genetal useful functions.
+Useful functions.
 """
 # built-in.
 import json
+import time
+import pickle
 import logging
-from typing import Dict, Union
+from datetime import datetime, timedelta
+from typing import Dict, Union, List, Any, Optional, TypeVar
 from pathlib import Path
 
 # third-party.
 from dotenv import load_dotenv
-from flask import current_app
+
+# local.
+from src.mediocremiles.models.activity import ActivityModel
 
 
 log = logging.getLogger(__name__)
 
+T = TypeVar("T")
 
+
+
+def to_list(arg: Union[T, List[T]]) -> List[T]:
+    """
+    Returns listed arg.
+    """
+    if isinstance(arg, list):
+        return arg
+    return [arg]
 
 
 def load_envs(env_path: Union[str, Path]) -> None:
@@ -29,7 +44,7 @@ def load_envs(env_path: Union[str, Path]) -> None:
     return None
 
 
-def load_config(config: str = "config.json") -> Dict:
+def load_config(config: str = "config.json") -> Dict[str, Any]:
     """
     Loads JSON config file.
     """
@@ -48,19 +63,24 @@ def load_config(config: str = "config.json") -> Dict:
         raise
     
     
-def create_directory(path: Path) -> None:
+def create_directories(paths: Union[List[Path], Path]) -> None:
     """
     Creates directory for path.
     """
-    try:
-        if not path.exists():
-            path.mkdir(exist_ok=True, parents=True)
-            if current_app:
-                current_app.logger.info(f"PATH: Created directory: {path.as_posix()}")
-        else:
-            if current_app:
-                current_app.logger.info(f"PATH: Path exists: {path.as_posix()}")
-    except Exception as e:
-        log.error(f"Error creating directory '{path}': {e}")
-        raise
+    for path in to_list(paths):
+        if path.is_file(): path = path.parent
+        try:
+            if not path.exists():
+                path.mkdir(exist_ok=True, parents=True)
+                log.info(f"Created directory: {path.as_posix()}")
+        except Exception as e:
+            log.error(f"Error creating directory '{path}': {e}")
+            raise
     return None
+
+
+def get_date_n_days_ago(days: int = 30) -> datetime:
+    """
+    Get datetime object for n days ago.
+    """
+    return datetime.now() - timedelta(days=days)

@@ -7,7 +7,8 @@
     "code": "STRAVA_AUTH_CODE"
   },
   "routes": {
-    "auth": "http://localhost:8000"
+    "host": "localhost",
+    "port": 8500
   },
   "strava_endpoints": {
     "auth": "https://www.strava.com/oauth/authorize",

@@ -1,0 +1,10 @@
+# Strava token.
+strava_token.json
+
+# CSV files.
+*.csv
+
+# Ignoring Pychache.
+*.pyc
+*.pyo
+__pycache__/
