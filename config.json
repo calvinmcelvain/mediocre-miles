@@ -7,7 +7,7 @@
     "code": "STRAVA_AUTH_CODE"
   },
   "routes": {
-    "auth": "http://localhost:8000"
+    "dashboard": "http://localhost:8000"
   },
   "strava_endpoints": {
     "auth": "https://www.strava.com/oauth/authorize",
