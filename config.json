@@ -9,6 +9,11 @@
   "routes": {
     "auth": "http://localhost:8000"
   },
+  "strava_endpoints": {
+    "auth": "https://www.strava.com/oauth/authorize",
+    "token": "https://www.strava.com/oauth/token",
+    "base": "https://www.strava.com/api/v3"
+  },
   "paths": {
     "env": "dotfiles/mediocre_miles.env",
     "data": "data/strava_data.csv"
