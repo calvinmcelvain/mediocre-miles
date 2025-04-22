@@ -1,75 +1,70 @@
+"""
+Contains the ActivityProcessor model.
+"""
+
 # built-in.
 from datetime import datetime
-from typing import List
+from pathlib import Path
+from typing import List, Optional
 
 # third-party.
 import pandas as pd
+from src.mediocremiles.utils import load_config
 from src.mediocremiles.models.activity import ActivityModel
+
+
+CONFIGS = load_config()
 
 
 
 class ActivityProcessor:
-    @staticmethod
-    def activities_to_dataframe(activities: List[ActivityModel]) -> pd.DataFrame:
-        data = [{
-            'id': a.id,
-            'name': a.name,
-            'type': a.type,
-            'date': a.start_date,
-            'day_of_week': a.start_date.strftime('%A'),
-            'distance_km': a.distance_km,
-            'moving_time_min': a.moving_time_minutes,
-            'elapsed_time_min': a.elapsed_time_minutes,
-            'elevation_gain_m': a.total_elevation_gain,
-            'avg_speed_kmh': a.average_speed_kmh,
-            'max_speed_kmh': a.max_speed_kmh,
-            'avg_heartrate': a.average_heartrate,
-            'max_heartrate': a.max_heartrate,
-            'kudos_count': a.kudos_count
-        } for a in activities]
-        
-        df = pd.DataFrame(data)
-        # Add derived time columns
-        if not df.empty:
-            df['week'] = df['date'].dt.isocalendar().week
-            df['month'] = df['date'].dt.month
-            df['year'] = df['date'].dt.year
-            df['day'] = df['date'].dt.day
-        
-        return df
+    """
+    Just a wrapper for activity data processing.
+    """
+    data_path = Path(CONFIGS.get("paths").get("data")).resolve()
+
+    def export_activities_to_csv(self, activities: List[ActivityModel]) -> None:
+        """
+        Export activities to CSV file.
+        """
+        activities_data = [activity.to_dict() for activity in activities]
+        df = pd.DataFrame(activities_data)
+        df.to_csv(self.data_path, index=False)
+        print(f"Exported {len(activities)} activities to {self.data_path}")
     
-    @staticmethod
-    def calculate_weekly_summary(df: pd.DataFrame) -> pd.DataFrame:
-        if df.empty:
-            return pd.DataFrame()
-            
-        weekly = df.copy()
-        
-        summary = weekly.groupby(['year', 'week']).agg({
-            'distance_km': 'sum',
-            'moving_time_min': 'sum',
-            'elevation_gain_m': 'sum',
-            'id': 'count'
-        }).reset_index()
-        
-        def get_week_start(row):
-            year, week = row['year'], row['week']
-            first_day = datetime.fromisocalendar(year, week, 1)
-            return first_day
-            
-        summary['week_start'] = summary.apply(get_week_start, axis=1)
-        summary.rename(columns={'id': 'activity_count'}, inplace=True)
-        
-        return summary
+    def get_latest_activity_date(self) -> Optional[datetime]:
+        """
+        Get the date of the most recent activity in the CSV file.
+        """
+        try:
+            df = pd.read_csv(self.data_path)
+            if df.empty or 'start_date' not in df.columns:
+                return None
+            df['start_date'] = pd.to_datetime(df['start_date'])
+            return df['start_date'].max().to_pydatetime()
+        except (FileNotFoundError, Exception):
+            return None
     
-    @staticmethod
-    def activity_type_summary(df: pd.DataFrame) -> pd.DataFrame:
-        if df.empty:
-            return pd.DataFrame()
+    def update_activities_csv(self, new_activities: List[ActivityModel]) -> None:
+        """
+        Update CSV with new activities, avoiding duplicates.
+        """
+        try:
+            new_df = pd.DataFrame([activity.to_dict() for activity in new_activities])
             
-        return df.groupby('type').agg({
-            'distance_km': 'sum',
-            'moving_time_min': 'sum',
-            'elevation_gain_m': 'sum',
-            'id': 'count'
-        }).reset_index().rename(columns={'id': 'count'})
+            try:
+                existing_df = pd.read_csv(self.data_path)
+                combined_df = pd.concat([existing_df, new_df], ignore_index=True)
+                combined_df = combined_df.drop_duplicates(subset=['id'], keep='last')
+            except FileNotFoundError:
+                combined_df = new_df
+            
+            if 'start_date' in combined_df.columns:
+                combined_df['start_date'] = pd.to_datetime(combined_df['start_date'])
+                combined_df = combined_df.sort_values('start_date', ascending=False)
+            
+            combined_df.to_csv(self.data_path, index=False)
+            print(f"Updated CSV with {len(new_df)} activities")
+            
+        except Exception as e:
+            print(f"Error updating CSV: {e}")
