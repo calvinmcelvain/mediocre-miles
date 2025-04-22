@@ -4,7 +4,7 @@ from typing import Dict, Any
 
 # third-party.
 from stravalib import Client
-import pandas as pd  # Add this import for handling CSV operations
+import pandas as pd
 
 # local.
 from src.mediocremiles.utils import load_config, load_envs

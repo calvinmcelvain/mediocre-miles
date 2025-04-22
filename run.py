@@ -1,5 +1,5 @@
 from flask import Flask, jsonify
-from src.mediocremiles.strava_client import StravaClient
+from mediocremiles.models.strava_client import StravaClient
 
 
 app = Flask(__name__)
