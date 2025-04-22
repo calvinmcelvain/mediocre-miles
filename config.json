@@ -16,6 +16,7 @@
   },
   "paths": {
     "env": "dotfiles/mediocre_miles.env",
-    "data": "data/strava_data.csv"
+    "data": "data/strava_data.csv",
+    "token": "strava_token.json"
   }
 }

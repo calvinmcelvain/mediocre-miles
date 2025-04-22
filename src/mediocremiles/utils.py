@@ -1,15 +1,18 @@
 """
 Genetal useful functions.
 """
-import os
+# built-in.
 import json
 import logging
 from typing import Dict, Union
 from pathlib import Path
+
+# third-party.
 from dotenv import load_dotenv
+from flask import current_app
 
 
-log = logging.getLogger("app")
+log = logging.getLogger(__name__)
 
 
 
@@ -43,3 +46,21 @@ def load_config(config: str = "config.json") -> Dict:
     except json.JSONDecodeError as e:
         log.error(f"Error parsing JSON file '{config}': {e}")
         raise
+    
+    
+def create_directory(path: Path) -> None:
+    """
+    Creates directory for path.
+    """
+    try:
+        if not path.exists():
+            path.mkdir(exist_ok=True, parents=True)
+            if current_app:
+                current_app.logger.info(f"PATH: Created directory: {path.as_posix()}")
+        else:
+            if current_app:
+                current_app.logger.info(f"PATH: Path exists: {path.as_posix()}")
+    except Exception as e:
+        log.error(f"Error creating directory '{path}': {e}")
+        raise
+    return None
