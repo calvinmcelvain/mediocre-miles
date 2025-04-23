@@ -48,39 +48,39 @@ class ActivityModel:
     device_name: Optional[str] = None
     
     @property
-    def distance_km(self):
+    def distance_km(self) -> float:
         return unit_helper.kilometers(self.distance_meters).magnitude
     
     @property
-    def distance_miles(self):
+    def distance_miles(self) -> float:
         return unit_helper.miles(self.distance_meters).magnitude
     
     @property
-    def moving_time_minutes(self):
+    def moving_time_minutes(self) -> float:
         return self.moving_time_seconds / 60
     
     @property
-    def elapsed_time_minutes(self):
+    def elapsed_time_minutes(self) -> float:
         return self.elapsed_time_seconds / 60
     
     @property
-    def average_speed_kmh(self):
+    def average_speed_kmh(self) -> float:
         return unit_helper.kilometers_per_hour(self.average_speed_meters_sec).magnitude
     
     @property
-    def average_speed_mph(self):
+    def average_speed_mph(self) -> float:
         return unit_helper.miles_per_hour(self.average_speed_meters_sec).magnitude
     
     @property
-    def max_speed_kmh(self):
+    def max_speed_kmh(self) -> float:
         return unit_helper.kilometers_per_hour(self.max_speed_meters_sec).magnitude
     
     @property
-    def max_speed_mph(self):
+    def max_speed_mph(self) -> float:
         return unit_helper.miles_per_hour(self.max_speed_meters_sec).magnitude
     
     @property
-    def elevation_gain_feet(self):
+    def elevation_gain_feet(self) -> float:
         return unit_helper.feet(self.elevation_gain_meters).magnitude
     
     @classmethod
