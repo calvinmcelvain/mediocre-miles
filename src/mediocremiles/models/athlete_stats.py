@@ -19,7 +19,7 @@ class ActivityTotal:
     moving_time: int 
     elapsed_time: int 
     elevation_gain: float 
-    acheivement_count: int
+    achievement_count: int
     
     @property
     def distance_km(self) -> float:
