@@ -3,7 +3,7 @@ Contains the ActivityModel.
 """
 
 # built-in
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -23,7 +23,7 @@ class ActivityModel:
     distance_meters: float
     moving_time_seconds: int
     elapsed_time_seconds: int
-    total_elevation_gain_meters: float
+    elevation_gain_meters: float
     average_speed_meters_sec: float
     max_speed_meters_sec: float
     kudos_count: int
@@ -35,11 +35,17 @@ class ActivityModel:
     shoe_total_distance: Optional[float] = None
     average_temp: Optional[int] = None
     city: Optional[str] = None
-    calories: float
+    calories: float = None
     start_lat: Optional[float] = None
     start_lon: Optional[float] = None
     end_lat: Optional[float] = None
     end_lon: Optional[float] = None
+    perceived_exertion: Optional[float] = None
+    suffer_score: Optional[int] = None
+    weighted_average_power: Optional[float] = None
+    splits_metric: Optional[list] = None
+    splits_standard: Optional[list] = None
+    device_name: Optional[str] = None
     
     @property
     def distance_km(self):
@@ -73,6 +79,10 @@ class ActivityModel:
     def max_speed_mph(self):
         return unit_helper.miles_per_hour(self.max_speed_meters_sec).magnitude
     
+    @property
+    def elevation_gain_feet(self):
+        return unit_helper.feet(self.elevation_gain_meters).magnitude
+    
     @classmethod
     def from_strava_activity(cls, strava_activity: DetailedActivity) -> 'ActivityModel':
         """
@@ -94,6 +104,11 @@ class ActivityModel:
             shoe = getattr(gear, 'name', None)
             shoe_total = getattr(gear, 'distance', None)
         
+        # Strava reports cadence as RPM. Converting to SPM if not Ride type.
+        cadence = getattr(strava_activity, 'average_cadence', None)
+        if strava_activity.type.root not in {"Ride", "EBikeRide", "VirtualRide"}:
+            cadence = cadence * 2
+        
         return cls(
             id=getattr(strava_activity, 'id', None),
             name=getattr(strava_activity, 'name', None),
@@ -102,14 +117,14 @@ class ActivityModel:
             distance_meters=getattr(strava_activity, 'distance', None),
             moving_time_seconds=getattr(strava_activity, 'moving_time', None),
             elapsed_time_seconds=getattr(strava_activity, 'elapsed_time', None),
-            total_elevation_gain_meters=getattr(strava_activity, 'total_elevation_gain', None),
+            elevation_gain_meters=getattr(strava_activity, 'total_elevation_gain', None),
             average_speed_meters_sec=getattr(strava_activity, 'average_speed', None),
             max_speed_meters_sec=getattr(strava_activity, 'max_speed', None),
             kudos_count=getattr(strava_activity, 'kudos_count', None),
             pr_count=getattr(strava_activity, 'pr_count', None),
             average_heartrate=getattr(strava_activity, 'average_heartrate', None),
             max_heartrate=getattr(strava_activity, 'max_heartrate', None),
-            average_cadence=getattr(strava_activity, 'average_cadence', None),
+            average_cadence=cadence,
             shoes=shoe,
             shoe_total_distance=shoe_total,
             average_temp=getattr(strava_activity, 'average_temp', None),
@@ -118,40 +133,17 @@ class ActivityModel:
             start_lat=start_lat,
             start_lon=start_lon,
             end_lat=end_lat,
-            end_lon=end_lon
+            end_lon=end_lon,
+            perceived_exertion=getattr(strava_activity, 'perceived_exertion', None),
+            suffer_score=getattr(strava_activity, 'suffer_score', None),
+            weighted_average_power=getattr(strava_activity, 'weighted_average_watts', None),
+            splits_metric=getattr(strava_activity, 'splits_metric'),
+            splits_standard=getattr(strava_activity, 'splits_standard'),
+            device_name=getattr(strava_activity, 'device_name', None)
         )
     
     def to_dict(self):
         """
         Convert to dictionary for CSV export.
         """
-        result = {
-            'id': self.id,
-            'name': self.name,
-            'activity_type': self.activity_type,
-            'start_date': self.start_date.isoformat(),
-            'distance_km': float(self.distance_km),
-            'distance_miles': float(self.distance_miles),
-            'moving_time_minutes': self.moving_time_minutes,
-            'elapsed_time_minutes': self.elapsed_time_minutes,
-            'total_elevation_gain_meters': self.total_elevation_gain_meters,
-            'average_speed_mph': float(self.average_speed_mph),
-            'average_speed_kmh': float(self.average_speed_kmh),
-            'max_speed_kmh': float(self.max_speed_kmh),
-            'max_speed_mph': float(self.max_speed_mph),
-            'kudos_count': self.kudos_count,
-            'pr_count': self.pr_count,
-            'average_heartrate': self.average_heartrate,
-            'max_heartrate': self.max_heartrate,
-            'average_cadence': self.average_cadence,
-            'shoes': self.shoes,
-            'shoe_total_distance': self.shoe_total_distance,
-            'average_temp': self.average_temp,
-            'city': self.city,
-            'calories': self.calories,
-            'start_lat': self.start_lat,
-            'start_lon': self.start_lon,
-            'end_lat': self.end_lat,
-            'end_lon': self.end_lon
-        }
-        return result
+        return asdict(self)
