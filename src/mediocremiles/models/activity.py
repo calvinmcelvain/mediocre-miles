@@ -64,6 +64,14 @@ class ActivityModel:
         return self.elapsed_time_seconds / 60
     
     @property
+    def moving_time_hours(self) -> float:
+        return unit_helper.hours(self.moving_time_seconds).magnitude
+    
+    @property
+    def elapsed_time_hours(self) -> float:
+        return unit_helper.hours(self.elapsed_time_seconds).magnitude
+    
+    @property
     def average_speed_kmh(self) -> float:
         return unit_helper.kilometers_per_hour(self.average_speed_meters_sec).magnitude
     
