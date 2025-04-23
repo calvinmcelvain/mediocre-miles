@@ -35,6 +35,7 @@ class ActivityModel:
     shoe_total_distance: Optional[float] = None
     average_temp: Optional[int] = None
     city: Optional[str] = None
+    calories: float
     start_lat: Optional[float] = None
     start_lon: Optional[float] = None
     end_lat: Optional[float] = None
@@ -113,6 +114,7 @@ class ActivityModel:
             shoe_total_distance=shoe_total,
             average_temp=getattr(strava_activity, 'average_temp', None),
             city=getattr(strava_activity, 'location_city', None),
+            calories=getattr(strava_activity, 'calories', None),
             start_lat=start_lat,
             start_lon=start_lon,
             end_lat=end_lat,
@@ -146,6 +148,7 @@ class ActivityModel:
             'shoe_total_distance': self.shoe_total_distance,
             'average_temp': self.average_temp,
             'city': self.city,
+            'calories': self.calories,
             'start_lat': self.start_lat,
             'start_lon': self.start_lon,
             'end_lat': self.end_lat,
