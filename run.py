@@ -21,28 +21,6 @@ CONFIG = load_config()
 WorkoutType = Literal["run", "ride"]
 
 
-def authenticate_client() -> StravaClient:
-    """
-    Handle authentication with Strava.
-    """
-    client = StravaClient()
-    
-    if not client.is_authenticated():
-        auth_url = client.get_authorization_url()
-        log.info(
-            f"Please authorize the application by visiting: {auth_url}\n"
-            "After authorization, you'll be redirected to your redirect URI.\n"
-            "Copy the 'code' parameter from the URL and paste it below:"
-        )
-        
-        code = input("Enter the authorization code: ").strip()
-        client.exchange_code_for_token(code)
-        
-        if not client.is_authenticated(): return None
-    
-    return client
-
-
 def fetch_activities(
     client: StravaClient, 
     after_date: Optional[datetime] = None, 
@@ -103,8 +81,9 @@ def main():
                        help='Filter activities by type (run or ride)')
     args = parser.parse_args()
     
-    client = authenticate_client()
-    if not client: return
+    client = StravaClient()
+    
+    if not client: return None
     
     if args.zones: AthleteProcessor().export_athlete_zones(client)
     
