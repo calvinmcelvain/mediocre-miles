@@ -16,7 +16,7 @@ from stravalib.strava_model import Zones
 class HeartRateZone:
     zone_number: int
     min_bpm: int
-    max_bpm: Optional[int] = None
+    max_bpm: Optional[int]
     
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -26,7 +26,7 @@ class HeartRateZone:
 class PowerZone:
     zone_number: int
     min_watts: int
-    max_watts: Optional[int] = None
+    max_watts: Optional[int]
     
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)

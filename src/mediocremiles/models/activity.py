@@ -28,25 +28,25 @@ class ActivityModel:
     average_speed_meters_sec: float
     max_speed_meters_sec: float
     kudos_count: int
-    pr_count: Optional[int] = None
-    average_heartrate: Optional[float] = None
-    max_heartrate: Optional[float] = None
-    average_cadence: Optional[float] = None
-    shoes: Optional[str] = None
-    shoe_total_distance: Optional[float] = None
-    average_temp: Optional[int] = None
-    city: Optional[str] = None
-    calories: float = None
-    start_lat: Optional[float] = None
-    start_lon: Optional[float] = None
-    end_lat: Optional[float] = None
-    end_lon: Optional[float] = None
-    perceived_exertion: Optional[float] = None
-    suffer_score: Optional[int] = None
-    weighted_average_power: Optional[float] = None
-    splits_metric: Optional[list] = None
-    splits_standard: Optional[list] = None
-    device_name: Optional[str] = None
+    pr_count: Optional[int]
+    average_heartrate: Optional[float]
+    max_heartrate: Optional[float]
+    average_cadence: Optional[float]
+    shoes: Optional[str]
+    shoe_total_distance: Optional[float]
+    average_temp: Optional[int]
+    city: Optional[str]
+    calories: float
+    start_lat: Optional[float] 
+    start_lon: Optional[float] 
+    end_lat: Optional[float] 
+    end_lon: Optional[float] 
+    perceived_exertion: Optional[float] 
+    suffer_score: Optional[int] 
+    weighted_average_power: Optional[float] 
+    splits_metric: Optional[list]
+    splits_standard: Optional[list]
+    device_name: Optional[str]
     
     @property
     def distance_km(self) -> float:
