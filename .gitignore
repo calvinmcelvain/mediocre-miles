@@ -1,8 +1,11 @@
 # Strava token.
 strava_token.json
 
-# CSV files.
-*.csv
+# Ignore all files in the /data directory
+data/*
+
+# Keep the /data directory
+!data/.gitkeep
 
 # Ignoring Pychache.
 *.pyc

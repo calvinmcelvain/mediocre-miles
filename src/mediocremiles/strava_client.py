@@ -2,27 +2,27 @@
 Contains the StravaClient model.
 """
 # built-in.
-import os
 import time
 import json
-import logging
-from typing import Optional, List, Dict
+from os import environ
+from typing import Optional, List, Dict, Any
 from pathlib import Path
 
 # third-party.
 from stravalib import Client
 from stravalib.exc import AccessUnauthorized, RateLimitExceeded, RateLimitTimeout
 from stravalib.model import DetailedActivity, SummaryActivity, AthleteStats
+from stravalib.strava_model import Zones
 from datetime import datetime
 
 # local.
-from src.mediocremiles.utils import load_config, load_envs, create_directories
-
-
-log = logging.getLogger(__name__)
+from src.mediocremiles.utils import load_config, load_envs
 
 
 CONFIGS = load_config()
+ENV_VARS: Dict[str, str] = CONFIGS["env"]
+PATHS: Dict[str, Any] = CONFIGS["paths"]
+ROUTES: Dict[str, Any] = CONFIGS["routes"]
 
 
 
@@ -31,20 +31,17 @@ class StravaClient:
     Handles Strava API interactions for accessing athlete data and activities.
     """
     def __init__(self):
-        load_envs(CONFIGS["paths"]["env"])
+        # Loading env. vars.
+        load_envs(PATHS.get("env"))
         
-        self.client_id = int(os.environ.get(CONFIGS["env"]["client_id"]))
-        self.client_secret = os.environ.get(CONFIGS["env"]["client_secret"])
+        self.client_id = int(environ.get(ENV_VARS.get("client_id")))
+        self.client_secret = environ.get(ENV_VARS.get("client_secret"))
         
-        host = CONFIGS["routes"]["host"]
-        port = CONFIGS["routes"]["port"]
+        host = ROUTES.get("host")
+        port = ROUTES.get("port")
         self.redirect = f"https://{host}:{port}"
         
-        paths: Dict = CONFIGS.get("paths")
-        self.data_file = Path(paths.get("data")).resolve()
-        self.token_file = Path(paths.get("token")).resolve()
-        
-        create_directories(Path("data").resolve())
+        self.token_file = Path(PATHS.get("token")).resolve()
         
         self.client = Client()
         self._initiate_and_authorize()
@@ -54,37 +51,34 @@ class StravaClient:
         Initiates Strava API client and checks to see if authorization code is 
         already stored in env vars. If not, prompts to authorize.
         """
-        auth_code = os.environ.get(CONFIGS["env"]["code"])
-        
-        if not auth_code:
+        if not self.check_refresh():
             url = self.client.authorization_url(
                 client_id=self.client_id,
                 redirect_uri=self.redirect,
-                scope=['read_all', 'activity:read_all']
+                scope=['read_all', 'activity:read_all', 'profile:read_all']
             )
             
             auth_code = input(
                 f"Follow the following link: {url}\n"
                 "Code:"
-            )
-            os.environ[CONFIGS["env"]["code"]] = auth_code
+            ).strip()
             
-        try:
-            access_token = self.client.exchange_code_for_token(
-                client_id=self.client_id,
-                client_secret=self.client_secret,
-                code=str(auth_code)
-            )
-            
-            self.client.access_token = access_token["access_token"]
-            self.client.refresh_token = access_token["refresh_token"]
-            self.client.token_expires = access_token["expires_at"]
-            self._save_token_to_file(access_token)
-            
-            return self.client
-        except Exception as e:
-            log.exception(f"Authorization failed: {str(e)}")
-            return None
+            try:
+                access_token = self.client.exchange_code_for_token(
+                    client_id=self.client_id,
+                    client_secret=self.client_secret,
+                    code=str(auth_code)
+                )
+                self._save_token_to_file(access_token)
+            except Exception as e:
+                print(f"Authorization failed: {str(e)}")
+                return None
+        
+        access_token = self._load_token_from_file()
+        self.client.access_token = access_token["access_token"]
+        self.client.refresh_token = access_token["refresh_token"]
+        self.client.token_expires = access_token["expires_at"]
+        return None
     
     def check_refresh(self) -> bool:
         """
@@ -140,7 +134,7 @@ class StravaClient:
             
             return token_response
         except Exception as e:
-            log.exception(f"Error refreshing token: {str(e)}")
+            print(f"Error refreshing token: {str(e)}")
             return None
     
     def _save_token_to_file(self, token_data: dict) -> None:
@@ -150,7 +144,7 @@ class StravaClient:
         with self.token_file.open("w") as f:
             json.dump(token_data, f)
         
-        log.info(f"Token data saved to: {self.token_file.as_posix()}")
+        print(f"Token data saved to: {self.token_file.as_posix()}")
         return None
     
     def _load_token_from_file(self) -> Dict[str, str]:
@@ -160,15 +154,8 @@ class StravaClient:
         if self.token_file.exists():
             with self.token_file.open() as f:
                 return json.load(f)
-        log.info(f"Token file loaded from: {self.token_file.as_posix()}")
+        print(f"Token file loaded from: {self.token_file.as_posix()}")
         return None
-    
-    def get_athlete(self):
-        """
-        Get authenticated athlete information.
-        """
-        if not self.is_authenticated(): return None
-        return self.client.get_athlete()
     
     def get_athlete_stats(self) -> AthleteStats:
         """
@@ -176,9 +163,15 @@ class StravaClient:
         """
         if not self.is_authenticated(): return None
             
-        athlete = self.get_athlete()
-        if athlete: return self.client.get_athlete_stats(athlete.id)
-        return None
+        return self.client.get_athlete_stats()
+    
+    def get_athlete_zones(self) -> Zones:
+        """
+        Get athlete zones.
+        """
+        if not self.is_authenticated(): return None
+        
+        return self.client.get_athlete_zones()
     
     def get_activities(
         self,
@@ -201,11 +194,11 @@ class StravaClient:
                 retried = False
             except (RateLimitTimeout, RateLimitExceeded):
                 if retried:
-                    log.exception(
+                    print(
                         "Strava API rate day limit exceeded. Try again tomorrow."
                     )
                     return None
-                log.exception("Strava API rate limit exceeded. Retrying...")
+                print("Strava API rate limit exceeded. Retrying...")
                 retried = True
         
         return list(activities)
@@ -232,15 +225,15 @@ class StravaClient:
                     # If still rate limit exception, it means day rate limit 
                     # reached.
                     if retried:
-                        log.exception(
+                        print(
                             "Strava API rate day limit exceeded. Try again tomorrow."
                         )
                         adjusted_activities = activities[len(detailed_activities):]
                         return detailed_activities + adjusted_activities
-                    log.exception("Strava API rate limit exceeded. Retrying...")
+                    print("Strava API rate limit exceeded. Retrying...")
                     retried = True
                 except Exception as e:
-                    log.exception(f"Got exception: {str(e)}")
+                    print(f"Got exception: {str(e)}")
                     adjusted_activities = activities[len(detailed_activities):]
                     return detailed_activities + adjusted_activities
         return detailed_activities
@@ -253,12 +246,11 @@ class StravaClient:
             return True
         
         try:
-            self.refresh_if_needed()
-            self.client.get_athlete()
+            self.refresh_token()
             return True
         except AccessUnauthorized:
-            log.exception(f"Strava client could not be authenticated")
+            print(f"Strava client could not be authenticated")
             return False
         except Exception as e:
-            log.exception(f"Authentication error: {e}")
+            print(f"Authentication error: {e}")
             return False

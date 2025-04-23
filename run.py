@@ -1,62 +1,64 @@
 # built-in.
-import logging
 import argparse
-from typing import Optional, List
+from typing import Optional, List, Literal
 from datetime import datetime, timedelta
 
 # local.
 from src.mediocremiles.strava_client import StravaClient
 from src.mediocremiles.models.activity import ActivityModel
-from src.mediocremiles.processors.data_processor import ActivityProcessor
+from src.mediocremiles.processors.activity_processor import ActivityProcessor
+from src.mediocremiles.processors.athlete_processor import AthleteProcessor
 from src.mediocremiles.utils import get_date_n_days_ago, load_config
 
-
-log = logging.getLogger(__name__)
 
 
 CONFIG = load_config()
 
 
-
-
-def authenticate_client() -> StravaClient:
-    """
-    Handle authentication with Strava.
-    """
-    client = StravaClient()
-    
-    if not client.is_authenticated():
-        auth_url = client.get_authorization_url()
-        log.info(
-            f"Please authorize the application by visiting: {auth_url}\n"
-            "After authorization, you'll be redirected to your redirect URI.\n"
-            "Copy the 'code' parameter from the URL and paste it below:"
-        )
-        
-        code = input("Enter the authorization code: ").strip()
-        client.exchange_code_for_token(code)
-        
-        if not client.is_authenticated(): return None
-    
-    return client
+WorkoutType = Literal["run", "ride"]
 
 
 def fetch_activities(
-    client: StravaClient, after_date: Optional[datetime] = None
+    client: StravaClient, 
+    after_date: Optional[datetime] = None, 
+    detailed: bool = False,
+    activity_type: Optional[WorkoutType] = None
 ) -> List[ActivityModel]:
     """
     Fetch activities from Strava API after the specified date (if applicable).
+    Get detailed activity data if requested.
+    Filter by activity_type if specified.
     """
-    if after_date: log.info(f"Fetching activities after {after_date}...")
+    if after_date: print(f"Fetching activities after {after_date}...")
+    if activity_type: print(f"Filtering activities to type: {activity_type}")
     
-    strava_activities = client.get_activities(after=after_date)
-    activities = [ActivityModel.from_strava_activity(a) for a in strava_activities]
+    summary_activities = client.get_activities(after=after_date)
     
-    if activities:
-        log.info(f"Fetched {len(activities)} activities from Strava API")
+    if not summary_activities:
+        print("No new activities found.")
+        return []
+    
+    if activity_type:
+        filtered_activities = list(filter(
+            lambda a: a.type.root.lower() == activity_type.lower(),
+            summary_activities
+        ))
+        
+        print(f"Filtered to {len(filtered_activities)} {activity_type} activities")
+        summary_activities = filtered_activities
+    
+    if not summary_activities:
+        print(f"No {activity_type} activities found after filtering.")
+        return []
+    
+    if detailed:
+        print(f"Fetching detailed data for {len(summary_activities)} activities...")
+        detailed_activities = client.get_detailed_activities(summary_activities)
+        activities = [ActivityModel.from_strava_activity(a) for a in detailed_activities]
     else:
-        log.info("No new activities found.")
+        activities = [ActivityModel.from_strava_activity(a) for a in summary_activities]
     
+    print(f"Fetched {len(activities)} activities from Strava API")
     return activities
 
 
@@ -68,46 +70,52 @@ def main():
                        help='Fetch all activities (overrides --days)')
     parser.add_argument('--detailed', action='store_true', 
                        help='Fetches the detailed activity data for each activity fetched.')
+    parser.add_argument('--zones', action='store_true',
+                       help='Export athlete zones to CSV')
+    parser.add_argument('--athlete-stats', action='store_true',
+                       help='Export athlete statistics to JSON')
+    parser.add_argument('--type', type=str, choices=list(WorkoutType.__args__),
+                       help='Filter activities by type (run or ride)')
     args = parser.parse_args()
     
-    client = authenticate_client()
-    if not client: return
+    client = StravaClient()
+    
+    if not client: return None
+    
+    if args.zones: AthleteProcessor().export_athlete_zones(client)
+    
+    if args.athlete_stats: AthleteProcessor().export_athlete_stats(client)
     
     after_date = None
     
     if args.all: 
-        log.info("Fetching all activities...")
+        print("Fetching all activities...")
     elif args.days is not None:
         after_date = get_date_n_days_ago(args.days)
-        log.info(f"Fetching activities from the last {args.days} days...")
+        print(f"Fetching activities from the last {args.days} days...")
     else:
         latest_date = ActivityProcessor().get_latest_activity_date()
         
         if latest_date:
             # avoids timezone issues.
             after_date = latest_date - timedelta(hours=1)
-            log.info(f"Fetching activities newer than {latest_date}...")
+            print(f"Fetching activities newer than {latest_date}...")
         else:
             after_date = get_date_n_days_ago(30)
-            log.info(
-                "No existing CSV found. Fetching activities from the last 30 days..."
-            )
+            print("Fetching activities from the last 30 days...")
     
-    activities = fetch_activities(client, after_date)
+    activities = fetch_activities(
+        client, 
+        after_date, 
+        args.detailed, 
+        args.type
+    )
     
     if not activities:
-        log.info("No activities to export.")
+        print("No activities to export.")
         return
     
     ActivityProcessor().update_activities_csv(activities)
-    
-    if args.detailed: client.get_detailed_activities(activities)
-    
-    ActivityProcessor().update_activities_csv(activities)
-    
-    log.info(
-        f"All activities have been saved to: {ActivityProcessor().data_path.as_posix()}"
-    )
 
 
 if __name__ == "__main__":

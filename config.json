@@ -3,21 +3,19 @@
     "client_id": "STRAVA_CLIENT_ID",
     "client_secret": "STRAVA_CLIENT_SECRET",
     "access_token": "STRAVA_ACCESS_TOKEN",
-    "refresh_token": "STRAVA_REFRESH_TOKEN",
-    "code": "STRAVA_AUTH_CODE"
+    "refresh_token": "STRAVA_REFRESH_TOKEN"
   },
   "routes": {
     "host": "localhost",
     "port": 8500
   },
-  "strava_endpoints": {
-    "auth": "https://www.strava.com/oauth/authorize",
-    "token": "https://www.strava.com/oauth/token",
-    "base": "https://www.strava.com/api/v3"
-  },
   "paths": {
     "env": "dotfiles/mediocre_miles.env",
-    "data": "data/strava_data.csv",
+    "data": {
+      "activity_data": "data/strava_data.csv",
+      "athlete_stats": "data/athlete_stats.json",
+      "athlete_zones": "data/athlete_zones.json"
+    },
     "token": "strava_token.json"
   }
 }

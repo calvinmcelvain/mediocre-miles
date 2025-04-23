@@ -13,28 +13,47 @@ For inquiries, please contact **Calvin McElvain** at [mcelvain@hotmail.com](mail
 - Python 3.8+
 - A Strava account
 - Strava API credentials (Client ID & Secret)
+  - See [Strava's getting started guide](https://developers.strava.com/docs/getting-started/).
 
 ### Installation
 
 1. Clone the repository
-
+    
 ```bash
 git clone https://github.com/your-username/mediocre-miles.git
 cd mediocre-miles
 ```
 
-2. Install dependencies
+2. Create virtual environment
+
+_Python env_:
+
+```bash
+python -m venv <environment_name>
+source <environment_name>/bin/activate
+```
+
+_Andaconda env_:
+
+```bash
+conda create -n <environment_name> python=12.7.0
+conda activate <environment_name>
+```
+
+3. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Set up your environment variables in `.env`:
+3. Create a `.env` file, adding variables:
 
 ```
 STRAVA_CLIENT_ID=your_client_id
 STRAVA_CLIENT_SECRET=your_client_secret
 ```
+
+4. Edit `configs.json` file for `.env` path.
 
 ### Usage
 
@@ -44,6 +63,17 @@ Run the main script to fetch your Strava activities:
 python run.py --days 30  # Fetch last 30 days of activities
 python run.py --all     # Fetch all activities
 ```
+
+#### Command Options
+
+| Command               | Description                                                      |
+|-----------------------|------------------------------------------------------------------|
+| `--days <number>`     | Fetch activities from the last `<number>` days.                  |
+| `--all`               | Fetch all activities.                                            |
+| `--detailed`          | Fetch detailed activity data for each activity.                  |
+| `--zones`             | Export athlete zones to a CSV file.                              |
+| `--athlete-stats`     | Export athlete statistics to a JSON file.                        |
+| `--type <type>`       | Filter activities by `type` (only support for `run` or `ride`).  |
 
 ---
 
@@ -64,6 +94,7 @@ MediocreMiles aims to help users:
 - [X] Strava API integration.
 - [X] Activity data fetching and storage.
 - [X] Basic CSV export functionality.
+- [X] Add athlete statistic & zone data export.
 
 ### In Progress
 
