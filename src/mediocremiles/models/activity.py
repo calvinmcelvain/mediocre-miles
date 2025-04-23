@@ -41,7 +41,6 @@ class ActivityModel(BaseModel):
     perceived_exertion: Optional[float] 
     suffer_score: Optional[int] 
     weighted_average_power: Optional[float] 
-    splits_metric: Optional[list]
     splits_standard: Optional[list]
     device_name: Optional[str]
     
@@ -151,7 +150,6 @@ class ActivityModel(BaseModel):
             perceived_exertion=getattr(strava_activity, 'perceived_exertion', None),
             suffer_score=getattr(strava_activity, 'suffer_score', None),
             weighted_average_power=getattr(strava_activity, 'weighted_average_watts', None),
-            splits_metric=getattr(strava_activity, 'splits_metric', None),
             splits_standard=getattr(strava_activity, 'splits_standard', None),
             device_name=getattr(strava_activity, 'device_name', None)
         )
