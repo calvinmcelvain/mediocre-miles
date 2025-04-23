@@ -4,6 +4,7 @@ Contains the ActivityModel.
 
 # built-in
 from dataclasses import dataclass, asdict
+from typing import Dict, Any
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -158,7 +159,7 @@ class ActivityModel:
             device_name=getattr(strava_activity, 'device_name', None)
         )
     
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """
         Convert to dictionary for CSV export.
         """
