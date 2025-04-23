@@ -12,6 +12,7 @@ from stravalib.model import DetailedActivity
 from pydantic import BaseModel
 
 
+
 class ActivityModel(BaseModel):
     id: int
     name: str

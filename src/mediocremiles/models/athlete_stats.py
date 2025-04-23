@@ -11,6 +11,7 @@ from stravalib.model import AthleteStats
 from pydantic import BaseModel
 
 
+
 class ActivityTotal(BaseModel):
     count: int
     distance: float

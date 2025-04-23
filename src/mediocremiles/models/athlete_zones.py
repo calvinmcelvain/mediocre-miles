@@ -11,6 +11,7 @@ from stravalib.strava_model import Zones
 from pydantic import BaseModel
 
 
+
 class HeartRateZone(BaseModel):
     zone_number: int
     min_bpm: Optional[int]
