@@ -8,6 +8,7 @@ from typing import List, Optional, Dict
 
 # third-party.
 import pandas as pd
+from stravalib import unit_helper
 from src.mediocremiles.utils import load_config
 from src.mediocremiles.models.activity import ActivityModel
 
@@ -22,17 +23,6 @@ class ActivityProcessor:
     Just a wrapper for activity data processing.
     """
     activity_data_file = Path(DATA_PATHS.get("activity_data")).resolve()
-
-    def export_activities_to_csv(self, activities: List[ActivityModel]) -> None:
-        """
-        Export activities to CSV file.
-        """
-        activities_data = [activity.model_dump() for activity in activities]
-        df = pd.DataFrame(activities_data)
-        df.to_csv(self.activity_data_file, index=False)
-        print(
-            f"Exported {len(activities)} activities to {self.activity_data_file}"
-        )
     
     def get_latest_activity_date(self) -> Optional[datetime]:
         """
@@ -48,12 +38,32 @@ class ActivityProcessor:
             print("No existing CSV found.")
             return None
     
+    @staticmethod
+    def _dump_activities(activities: List[ActivityModel]):
+        """
+        Converts activies to dict.
+        if splits is specified, also creates new attributes fot those.
+        """
+        new_activities = []
+        for a in activities:
+            dumped = a.model_dump()
+            if hasattr(a, 'splits_standard'):
+                for i, split in enumerate(a.splits_standard):
+                    dumped[f'split_{i+1}_time'] = split.moving_time
+                    dumped[f'split_{i+1}_avghr'] = split.average_heartrate
+                    dumped[f'split_{i+1}_distance'] = unit_helper.miles(split.distance).magnitude
+                    dumped[f'split_{i+1}_pace'] = unit_helper.miles_per_hour(split.average_speed).magnitude
+                    dumped[f'split_{i+1}_elevation'] = unit_helper.feet(split.elevation_difference).magnitude
+                del dumped["splits_standard"]
+            new_activities.append(dumped)
+        return new_activities
+    
     def update_activities_csv(self, new_activities: List[ActivityModel]) -> None:
         """
         Update CSV with new activities, avoiding duplicates.
         """
         try:
-            new_df = pd.DataFrame([activity.model_dump() for activity in new_activities])
+            new_df = pd.DataFrame(self._dump_activities(new_activities))
             
             try:
                 existing_df = pd.read_csv(self.activity_data_file)
