@@ -3,20 +3,16 @@ Contains the ActivityModel.
 """
 
 # built-in
-from dataclasses import dataclass, asdict
-from typing import Dict, Any
 from datetime import datetime, timedelta
 from typing import Optional
 
 # third-party.
 from stravalib import unit_helper
 from stravalib.model import DetailedActivity
+from pydantic import BaseModel
 
 
-
-
-@dataclass
-class ActivityModel:
+class ActivityModel(BaseModel):
     id: int
     name: str
     activity_type: str
@@ -36,7 +32,7 @@ class ActivityModel:
     shoe_total_distance: Optional[float]
     average_temp: Optional[int]
     city: Optional[str]
-    calories: float
+    calories: Optional[float]
     start_lat: Optional[float] 
     start_lon: Optional[float] 
     end_lat: Optional[float] 
@@ -123,8 +119,8 @@ class ActivityModel:
         
         # Strava reports cadence as RPM. Converting to SPM if not Ride type.
         cadence = getattr(strava_activity, 'average_cadence', None)
-        if strava_activity.type.root not in {"Ride", "EBikeRide", "VirtualRide"}:
-            cadence = cadence * 2
+        if cadence and strava_activity.type.root not in {"Ride", "EBikeRide", "VirtualRide"}:
+            cadence *= 2
         
         return cls(
             id=getattr(strava_activity, 'id', None),
@@ -159,19 +155,5 @@ class ActivityModel:
             device_name=getattr(strava_activity, 'device_name', None)
         )
     
-    def to_dict(self) -> Dict[str, Any]:
-        """
-        Convert to dictionary for CSV export.
-        """
-        activity_dict = asdict(self)
-        
-        # Converting datetime objects to iso format.
-        activity_dict["start_date"] = self.start_date.isoformat()
-        activity_dict["start_week"] = self.starting_week.isoformat()
-        activity_dict["month"] = self.month.isoformat()
-        
-        if self.splits_standard:
-            for i, split in enumerate(self.splits):
-                activity_dict[f'split_{i+1}'] = split
-        
-        return asdict(self)
+    class Config:
+        orm_mode = True

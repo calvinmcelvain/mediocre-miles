@@ -31,7 +31,7 @@ class ActivityProcessor:
         """
         Export activities to CSV file.
         """
-        activities_data = [activity.to_dict() for activity in activities]
+        activities_data = [activity.model_dump() for activity in activities]
         df = pd.DataFrame(activities_data)
         df.to_csv(self.activity_data_file, index=False)
         log.info(
@@ -57,7 +57,7 @@ class ActivityProcessor:
         Update CSV with new activities, avoiding duplicates.
         """
         try:
-            new_df = pd.DataFrame([activity.to_dict() for activity in new_activities])
+            new_df = pd.DataFrame([activity.model_dump() for activity in new_activities])
             
             try:
                 existing_df = pd.read_csv(self.activity_data_file)

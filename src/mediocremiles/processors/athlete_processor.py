@@ -46,7 +46,7 @@ class AthleteProcessor:
             athlete_zones = AthleteZones.from_strava_zones(zones_data)
             
             with open(self.zones_file, 'w') as f:
-                json.dump(athlete_zones.to_dict(), f, indent=4)
+                json.dump(athlete_zones.model_dump(), f, indent=4)
             log.info(f"Exported all zones data to: {self.zones_file.as_posix()}")
             
         except Exception as e:
@@ -66,7 +66,7 @@ class AthleteProcessor:
             stats = AthleteStatistics.from_strava_stats(strava_stats)
             
             with open(self.stats_file, 'w') as f:
-                json.dump(stats.to_dict(), f, indent=4)
+                json.dump(stats.model_dump(), f, indent=4)
             
             log.info(f"Exported athlete stats to: {self.stats_file.as_posix()}")
             

@@ -2,23 +2,21 @@
 Contains the AthleteStatistics & ActivityTotal models.
 """
 # built-in.
-from dataclasses import dataclass, asdict
-from typing import Dict, Any, Optional
+from typing import Any, Optional
 from datetime import datetime
 
 # third-party.
 from stravalib import unit_helper
 from stravalib.model import AthleteStats
+from pydantic import BaseModel
 
 
-
-@dataclass
-class ActivityTotal:
+class ActivityTotal(BaseModel):
     count: int
     distance: float
-    moving_time: int 
-    elapsed_time: int 
-    elevation_gain: float 
+    moving_time: int
+    elapsed_time: int
+    elevation_gain: float
     achievement_count: int
     
     @property
@@ -45,28 +43,26 @@ class ActivityTotal:
             moving_time=getattr(strava_total, 'moving_time', 0),
             elapsed_time=getattr(strava_total, 'elapsed_time', 0),
             elevation_gain=getattr(strava_total, 'elevation_gain', 0),
-            achievement_count=getattr(strava_total, 'achievement_count', 0)
+            achievement_count=getattr(strava_total, 'achievement_count', 0) or 0
         )
-    
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
+
+    class Config:
+        orm_mode = True
 
 
-
-@dataclass
-class AthleteStatistics:
-    recent_ride_totals: Dict[str, Any]
-    recent_run_totals: Dict[str, Any]
-    recent_swim_totals: Dict[str, Any]
-    ytd_ride_totals: Dict[str, Any]
-    ytd_run_totals: Dict[str, Any]
-    ytd_swim_totals: Dict[str, Any]
-    all_ride_totals: Dict[str, Any]
-    all_run_totals: Dict[str, Any]
-    all_swim_totals: Dict[str, Any]
+class AthleteStatistics(BaseModel):
+    recent_ride_totals: ActivityTotal
+    recent_run_totals: ActivityTotal
+    recent_swim_totals: ActivityTotal
+    ytd_ride_totals: ActivityTotal
+    ytd_run_totals: ActivityTotal
+    ytd_swim_totals: ActivityTotal
+    all_ride_totals: ActivityTotal
+    all_run_totals: ActivityTotal
+    all_swim_totals: ActivityTotal
     biggest_ride_distance: Optional[float]
     biggest_climb_elevation_gain: Optional[float]
-    fetched_at: datetime
+    fetched_at: str = datetime.now().isoformat()
     
     @classmethod
     def from_strava_stats(cls, strava_stats: AthleteStats) -> 'AthleteStatistics':
@@ -76,37 +72,28 @@ class AthleteStatistics:
         """
         return cls(
             recent_ride_totals=ActivityTotal.from_strava_total(
-                strava_stats.recent_ride_totals).to_dict(),
+                strava_stats.recent_ride_totals),
             recent_run_totals=ActivityTotal.from_strava_total(
-                strava_stats.recent_run_totals).to_dict(),
+                strava_stats.recent_run_totals),
             recent_swim_totals=ActivityTotal.from_strava_total(
-                strava_stats.recent_swim_totals).to_dict(),
+                strava_stats.recent_swim_totals),
             ytd_ride_totals=ActivityTotal.from_strava_total(
-                strava_stats.ytd_ride_totals).to_dict(),
+                strava_stats.ytd_ride_totals),
             ytd_run_totals=ActivityTotal.from_strava_total(
-                strava_stats.ytd_run_totals).to_dict(),
+                strava_stats.ytd_run_totals),
             ytd_swim_totals=ActivityTotal.from_strava_total(
-                strava_stats.ytd_swim_totals).to_dict(),
+                strava_stats.ytd_swim_totals),
             all_ride_totals=ActivityTotal.from_strava_total(
-                strava_stats.all_ride_totals).to_dict(),
+                strava_stats.all_ride_totals),
             all_run_totals=ActivityTotal.from_strava_total(
-                strava_stats.all_run_totals).to_dict(),
+                strava_stats.all_run_totals),
             all_swim_totals=ActivityTotal.from_strava_total(
-                strava_stats.all_swim_totals).to_dict(),
+                strava_stats.all_swim_totals),
             biggest_ride_distance=getattr(
                 strava_stats, 'biggest_ride_distance', 0),
             biggest_climb_elevation_gain=getattr(
-                strava_stats, 'biggest_climb_elevation_gain', 0),
-            fetched_at=datetime.now()
+                strava_stats, 'biggest_climb_elevation_gain', 0)
         )
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """
-        converts to dictionary for JSON export.
-        """
-        athlete_stats_dict = asdict(self)
-        
-        # Converting datetime objects to iso format.
-        athlete_stats_dict["fetch_date"] = self.fetched_at.isoformat()
-        
-        return athlete_stats_dict
+
+    class Config:
+        orm_mode = True

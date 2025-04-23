@@ -3,40 +3,36 @@ Contains the AthleteZone model.
 """
 
 # built-in.
-from dataclasses import dataclass, asdict
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from datetime import datetime
 
 # third-party.
 from stravalib.strava_model import Zones
+from pydantic import BaseModel
 
 
-
-@dataclass
-class HeartRateZone:
+class HeartRateZone(BaseModel):
     zone_number: int
-    min_bpm: int
+    min_bpm: Optional[int]
     max_bpm: Optional[int]
     
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
+    class Config:
+        orm_mode = True
 
 
-@dataclass
-class PowerZone:
+class PowerZone(BaseModel):
     zone_number: int
-    min_watts: int
+    min_watts: Optional[int]
     max_watts: Optional[int]
     
-    def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
+    class Config:
+        orm_mode = True
 
 
-@dataclass
-class AthleteZones:
-    heart_rate_zones: List[Dict]
-    power_zones: List[Optional[Dict]]
-    fetched_at: datetime = datetime.now()
+class AthleteZones(BaseModel):
+    heart_rate_zones: List[Optional[HeartRateZone]]
+    power_zones: List[Optional[PowerZone]]
+    fetched_at: str = datetime.now().isoformat()
     
     @classmethod
     def from_strava_zones(cls, strava_zones: Zones) -> 'AthleteZones':
@@ -48,38 +44,34 @@ class AthleteZones:
         
         # Process heart rate zones.
         hr_data = strava_zones.heart_rate
-        if hasattr(hr_data, 'zones'):
+        if hr_data:
             for i, zone in enumerate(hr_data.zones.root):
+                if hasattr(zone, 'max'):
+                    if zone.max < 0: zone.max = None 
+                
                 hr_zones.append(HeartRateZone(
                     zone_number=i+1,
                     min_bpm=getattr(zone, 'min', None),
                     max_bpm=getattr(zone, 'max', None)
-                ).to_dict())
+                ))
         
         # Process power zones.
         power_data = strava_zones.power
-        if hasattr(power_data, 'zones'):
+        if power_data:
             for i, zone in enumerate(power_data.zones.root):
+                if hasattr(zone, 'max'):
+                    if zone.max < 0: zone.max = None
+                
                 power_zones.append(HeartRateZone(
                     zone_number=i+1,
                     min_bpm=getattr(zone, 'min', None),
                     max_bpm=getattr(zone, 'max', None)
-                ).to_dict())
+                ))
         
         return cls(
             heart_rate_zones=hr_zones,
-            power_zones=power_zones,
-            fetched_at=datetime.now()
+            power_zones=power_zones
         )
     
-    def to_dict(self) -> Dict[str, Any]:
-        """
-        Convert to dictionary for JSON export.
-        """
-        zone_dict = asdict(self)
-        
-        # Converting datetime objects to iso format.
-        zone_dict["fetched_at"] = self.fetched_at.isoformat()
-        
-        return zone_dict
-        
+    class Config:
+        orm_mode = True
