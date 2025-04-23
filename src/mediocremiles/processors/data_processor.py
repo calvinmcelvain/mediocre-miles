@@ -21,7 +21,7 @@ class ActivityProcessor:
     """
     Just a wrapper for activity data processing.
     """
-    data_path = Path(CONFIGS.get("paths").get("data")).resolve()
+    activity_data_file = Path(CONFIGS.get("paths").get("data")).resolve()
 
     def export_activities_to_csv(self, activities: List[ActivityModel]) -> None:
         """
@@ -29,15 +29,15 @@ class ActivityProcessor:
         """
         activities_data = [activity.to_dict() for activity in activities]
         df = pd.DataFrame(activities_data)
-        df.to_csv(self.data_path, index=False)
-        print(f"Exported {len(activities)} activities to {self.data_path}")
+        df.to_csv(self.activity_data_file, index=False)
+        print(f"Exported {len(activities)} activities to {self.activity_data_file}")
     
     def get_latest_activity_date(self) -> Optional[datetime]:
         """
         Get the date of the most recent activity in the CSV file.
         """
         try:
-            df = pd.read_csv(self.data_path)
+            df = pd.read_csv(self.activity_data_file)
             if df.empty or 'start_date' not in df.columns:
                 return None
             df['start_date'] = pd.to_datetime(df['start_date'])
@@ -53,7 +53,7 @@ class ActivityProcessor:
             new_df = pd.DataFrame([activity.to_dict() for activity in new_activities])
             
             try:
-                existing_df = pd.read_csv(self.data_path)
+                existing_df = pd.read_csv(self.activity_data_file)
                 combined_df = pd.concat([existing_df, new_df], ignore_index=True)
                 combined_df = combined_df.drop_duplicates(subset=['id'], keep='last')
             except FileNotFoundError:
@@ -63,7 +63,7 @@ class ActivityProcessor:
                 combined_df['start_date'] = pd.to_datetime(combined_df['start_date'])
                 combined_df = combined_df.sort_values('start_date', ascending=False)
             
-            combined_df.to_csv(self.data_path, index=False)
+            combined_df.to_csv(self.activity_data_file, index=False)
             print(f"Updated CSV with {len(new_df)} activities")
             
         except Exception as e:

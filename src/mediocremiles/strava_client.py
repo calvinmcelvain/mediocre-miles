@@ -40,9 +40,7 @@ class StravaClient:
         port = CONFIGS["routes"]["port"]
         self.redirect = f"https://{host}:{port}"
         
-        paths: Dict = CONFIGS.get("paths")
-        self.data_file = Path(paths.get("data")).resolve()
-        self.token_file = Path(paths.get("token")).resolve()
+        self.token_file = Path(CONFIGS.get("paths").get("token")).resolve()
         
         create_directories(Path("data").resolve())
         
