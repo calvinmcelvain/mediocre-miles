@@ -1,8 +1,8 @@
 """
 Contains the ActivityProcessor model.
 """
-
 # built-in.
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Dict
@@ -11,6 +11,9 @@ from typing import List, Optional, Dict
 import pandas as pd
 from src.mediocremiles.utils import load_config
 from src.mediocremiles.models.activity import ActivityModel
+
+
+log = logging.getLogger(__name__)
 
 
 CONFIGS = load_config()
@@ -31,7 +34,9 @@ class ActivityProcessor:
         activities_data = [activity.to_dict() for activity in activities]
         df = pd.DataFrame(activities_data)
         df.to_csv(self.activity_data_file, index=False)
-        print(f"Exported {len(activities)} activities to {self.activity_data_file}")
+        log.info(
+            f"Exported {len(activities)} activities to {self.activity_data_file}"
+        )
     
     def get_latest_activity_date(self) -> Optional[datetime]:
         """
@@ -44,6 +49,7 @@ class ActivityProcessor:
             df['start_date'] = pd.to_datetime(df['start_date'])
             return df['start_date'].max().to_pydatetime()
         except (FileNotFoundError, Exception):
+            log.warning("No existing CSV found.")
             return None
     
     def update_activities_csv(self, new_activities: List[ActivityModel]) -> None:
@@ -65,7 +71,12 @@ class ActivityProcessor:
                 combined_df = combined_df.sort_values('start_date', ascending=False)
             
             combined_df.to_csv(self.activity_data_file, index=False)
-            print(f"Updated CSV with {len(new_df)} activities")
+            log.info(f"Updated CSV with {len(new_df)} activities")
+            log.info(
+                "All activities have been saved to:"
+                f" {self.activity_data_file.as_posix()}"
+            )
             
         except Exception as e:
-            print(f"Error updating CSV: {e}")
+            log.exception(f"Error updating CSV: {e}")
+            return new_activities

@@ -13,6 +13,7 @@ from pathlib import Path
 from stravalib import Client
 from stravalib.exc import AccessUnauthorized, RateLimitExceeded, RateLimitTimeout
 from stravalib.model import DetailedActivity, SummaryActivity, AthleteStats
+from stravalib.strava_model import Zones
 from datetime import datetime
 
 # local.
@@ -164,22 +165,21 @@ class StravaClient:
         log.info(f"Token file loaded from: {self.token_file.as_posix()}")
         return None
     
-    def get_athlete(self):
-        """
-        Get authenticated athlete information.
-        """
-        if not self.is_authenticated(): return None
-        return self.client.get_athlete()
-    
     def get_athlete_stats(self) -> AthleteStats:
         """
         Get athlete statistics.
         """
         if not self.is_authenticated(): return None
             
-        athlete = self.get_athlete()
-        if athlete: return self.client.get_athlete_stats(athlete.id)
-        return None
+        return self.client.get_athlete_stats()
+    
+    def get_athlete_zones(self) -> Zones:
+        """
+        Get athlete zones.
+        """
+        if not self.is_authenticated(): return None
+        
+        return self.client.get_athlete_zones()
     
     def get_activities(
         self,
