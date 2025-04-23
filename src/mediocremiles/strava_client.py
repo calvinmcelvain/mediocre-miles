@@ -4,7 +4,6 @@ Contains the StravaClient model.
 # built-in.
 import time
 import json
-import logging
 from os import environ
 from typing import Optional, List, Dict, Any
 from pathlib import Path
@@ -18,9 +17,6 @@ from datetime import datetime
 
 # local.
 from src.mediocremiles.utils import load_config, load_envs, create_directories
-
-
-log = logging.getLogger(__name__)
 
 
 CONFIGS = load_config()
@@ -85,7 +81,7 @@ class StravaClient:
             
             return self.client
         except Exception as e:
-            log.exception(f"Authorization failed: {str(e)}")
+            print(f"Authorization failed: {str(e)}")
             return None
     
     def check_refresh(self) -> bool:
@@ -142,7 +138,7 @@ class StravaClient:
             
             return token_response
         except Exception as e:
-            log.exception(f"Error refreshing token: {str(e)}")
+            print(f"Error refreshing token: {str(e)}")
             return None
     
     def _save_token_to_file(self, token_data: dict) -> None:
@@ -152,7 +148,7 @@ class StravaClient:
         with self.token_file.open("w") as f:
             json.dump(token_data, f)
         
-        log.info(f"Token data saved to: {self.token_file.as_posix()}")
+        print(f"Token data saved to: {self.token_file.as_posix()}")
         return None
     
     def _load_token_from_file(self) -> Dict[str, str]:
@@ -162,7 +158,7 @@ class StravaClient:
         if self.token_file.exists():
             with self.token_file.open() as f:
                 return json.load(f)
-        log.info(f"Token file loaded from: {self.token_file.as_posix()}")
+        print(f"Token file loaded from: {self.token_file.as_posix()}")
         return None
     
     def get_athlete_stats(self) -> AthleteStats:
@@ -202,11 +198,11 @@ class StravaClient:
                 retried = False
             except (RateLimitTimeout, RateLimitExceeded):
                 if retried:
-                    log.exception(
+                    print(
                         "Strava API rate day limit exceeded. Try again tomorrow."
                     )
                     return None
-                log.exception("Strava API rate limit exceeded. Retrying...")
+                print("Strava API rate limit exceeded. Retrying...")
                 retried = True
         
         return list(activities)
@@ -233,15 +229,15 @@ class StravaClient:
                     # If still rate limit exception, it means day rate limit 
                     # reached.
                     if retried:
-                        log.exception(
+                        print(
                             "Strava API rate day limit exceeded. Try again tomorrow."
                         )
                         adjusted_activities = activities[len(detailed_activities):]
                         return detailed_activities + adjusted_activities
-                    log.exception("Strava API rate limit exceeded. Retrying...")
+                    print("Strava API rate limit exceeded. Retrying...")
                     retried = True
                 except Exception as e:
-                    log.exception(f"Got exception: {str(e)}")
+                    print(f"Got exception: {str(e)}")
                     adjusted_activities = activities[len(detailed_activities):]
                     return detailed_activities + adjusted_activities
         return detailed_activities
@@ -257,8 +253,8 @@ class StravaClient:
             self.refresh_token()
             return True
         except AccessUnauthorized:
-            log.exception(f"Strava client could not be authenticated")
+            print(f"Strava client could not be authenticated")
             return False
         except Exception as e:
-            log.exception(f"Authentication error: {e}")
+            print(f"Authentication error: {e}")
             return False

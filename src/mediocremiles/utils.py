@@ -3,7 +3,6 @@ Useful functions.
 """
 # built-in.
 import json
-import logging
 from datetime import datetime, timedelta
 from typing import Dict, Union, List, Any, TypeVar
 from pathlib import Path
@@ -11,8 +10,6 @@ from pathlib import Path
 # third-party.
 from dotenv import load_dotenv
 
-
-log = logging.getLogger()
 
 T = TypeVar("T")
 
@@ -35,7 +32,7 @@ def load_envs(env_path: Union[str, Path]) -> None:
     if env_path.exists():
         load_dotenv(env_path, override=True)
     else:
-        log.warning(f"No environment file ({env_path}) found.")
+        print(f"No environment file ({env_path}) found.")
     return None
 
 
@@ -51,10 +48,10 @@ def load_config(config: str = "config.json") -> Dict[str, Any]:
         with config_file.open("r") as file:
             return json.load(file)
     except FileNotFoundError:
-        log.error(f"Configuration file not found: {config}")
+        print(f"Configuration file not found: {config}")
         raise
     except json.JSONDecodeError as e:
-        log.error(f"Error parsing JSON file '{config}': {e}")
+        print(f"Error parsing JSON file '{config}': {e}")
         raise
     
     
@@ -67,9 +64,9 @@ def create_directories(paths: Union[List[Path], Path]) -> None:
         try:
             if not path.exists():
                 path.mkdir(exist_ok=True, parents=True)
-                log.info(f"Created directory: {path.as_posix()}")
+                print(f"Created directory: {path.as_posix()}")
         except Exception as e:
-            log.error(f"Error creating directory '{path}': {e}")
+            print(f"Error creating directory '{path}': {e}")
             raise
     return None
 

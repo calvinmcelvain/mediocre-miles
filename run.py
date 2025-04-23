@@ -1,5 +1,4 @@
 # built-in.
-import logging
 import argparse
 from typing import Optional, List, Literal
 from datetime import datetime, timedelta
@@ -11,8 +10,6 @@ from src.mediocremiles.processors.activity_processor import ActivityProcessor
 from src.mediocremiles.processors.athlete_processor import AthleteProcessor
 from src.mediocremiles.utils import get_date_n_days_ago, load_config
 
-
-log = logging.getLogger(__name__)
 
 
 CONFIG = load_config()
@@ -32,13 +29,13 @@ def fetch_activities(
     Get detailed activity data if requested.
     Filter by activity_type if specified.
     """
-    if after_date: log.info(f"Fetching activities after {after_date}...")
-    if activity_type: log.info(f"Filtering activities to type: {activity_type}")
+    if after_date: print(f"Fetching activities after {after_date}...")
+    if activity_type: print(f"Filtering activities to type: {activity_type}")
     
     summary_activities = client.get_activities(after=after_date)
     
     if not summary_activities:
-        log.info("No new activities found.")
+        print("No new activities found.")
         return []
     
     if activity_type:
@@ -47,21 +44,21 @@ def fetch_activities(
             summary_activities
         ))
         
-        log.info(f"Filtered to {len(filtered_activities)} {activity_type} activities")
+        print(f"Filtered to {len(filtered_activities)} {activity_type} activities")
         summary_activities = filtered_activities
     
     if not summary_activities:
-        log.info(f"No {activity_type} activities found after filtering.")
+        print(f"No {activity_type} activities found after filtering.")
         return []
     
     if detailed:
-        log.info(f"Fetching detailed data for {len(summary_activities)} activities...")
+        print(f"Fetching detailed data for {len(summary_activities)} activities...")
         detailed_activities = client.get_detailed_activities(summary_activities)
         activities = [ActivityModel.from_strava_activity(a) for a in detailed_activities]
     else:
         activities = [ActivityModel.from_strava_activity(a) for a in summary_activities]
     
-    log.info(f"Fetched {len(activities)} activities from Strava API")
+    print(f"Fetched {len(activities)} activities from Strava API")
     return activities
 
 
@@ -92,20 +89,20 @@ def main():
     after_date = None
     
     if args.all: 
-        log.info("Fetching all activities...")
+        print("Fetching all activities...")
     elif args.days is not None:
         after_date = get_date_n_days_ago(args.days)
-        log.info(f"Fetching activities from the last {args.days} days...")
+        print(f"Fetching activities from the last {args.days} days...")
     else:
         latest_date = ActivityProcessor().get_latest_activity_date()
         
         if latest_date:
             # avoids timezone issues.
             after_date = latest_date - timedelta(hours=1)
-            log.info(f"Fetching activities newer than {latest_date}...")
+            print(f"Fetching activities newer than {latest_date}...")
         else:
             after_date = get_date_n_days_ago(30)
-            log.info("Fetching activities from the last 30 days...")
+            print("Fetching activities from the last 30 days...")
     
     activities = fetch_activities(
         client, 
@@ -115,7 +112,7 @@ def main():
     )
     
     if not activities:
-        log.info("No activities to export.")
+        print("No activities to export.")
         return
     
     ActivityProcessor().update_activities_csv(activities)
