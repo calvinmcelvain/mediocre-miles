@@ -62,13 +62,13 @@ class StravaClient:
             url = self.client.authorization_url(
                 client_id=self.client_id,
                 redirect_uri=self.redirect,
-                scope=['read_all', 'activity:read_all']
+                scope=['read_all', 'activity:read_all', 'profile:read_all']
             )
             
             auth_code = input(
                 f"Follow the following link: {url}\n"
                 "Code:"
-            )
+            ).strip()
             environ[self.auth_code] = auth_code
             
         try:
@@ -254,8 +254,7 @@ class StravaClient:
             return True
         
         try:
-            self.refresh_if_needed()
-            self.client.get_athlete()
+            self.refresh_token()
             return True
         except AccessUnauthorized:
             log.exception(f"Strava client could not be authenticated")
