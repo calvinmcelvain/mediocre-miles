@@ -4,7 +4,7 @@ Contains the ActivityModel.
 
 # built-in
 from dataclasses import dataclass, asdict
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 # third-party.
@@ -91,6 +91,14 @@ class ActivityModel:
     def elevation_gain_feet(self) -> float:
         return unit_helper.feet(self.elevation_gain_meters).magnitude
     
+    @property
+    def starting_week(self) -> datetime:
+        return self.start_date - timedelta(days=self.start_date.weekday())
+    
+    @property
+    def month(self) -> datetime:
+        return self.start_date.month
+    
     @classmethod
     def from_strava_activity(cls, strava_activity: DetailedActivity) -> 'ActivityModel':
         """
@@ -155,6 +163,11 @@ class ActivityModel:
         Convert to dictionary for CSV export.
         """
         activity_dict = asdict(self)
+        
+        # Converting datetime objects to iso format.
+        activity_dict["start_date"] = self.start_date.isoformat()
+        activity_dict["start_week"] = self.starting_week.isoformat()
+        activity_dict["month"] = self.month.isoformat()
         
         if self.splits_standard:
             for i, split in enumerate(self.splits):
