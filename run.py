@@ -99,7 +99,7 @@ def main():
                        help='Export athlete zones to CSV')
     parser.add_argument('--athlete-stats', action='store_true',
                        help='Export athlete statistics to JSON')
-    parser.add_argument('--type', type=str, choices=WorkoutType,
+    parser.add_argument('--type', type=str, choices=list(WorkoutType.__args__),
                        help='Filter activities by type (run or ride)')
     args = parser.parse_args()
     
