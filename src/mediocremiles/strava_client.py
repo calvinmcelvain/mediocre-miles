@@ -2,11 +2,11 @@
 Contains the StravaClient model.
 """
 # built-in.
-import os
 import time
 import json
 import logging
-from typing import Optional, List, Dict
+from os import environ
+from typing import Optional, List, Dict, Any
 from pathlib import Path
 
 # third-party.
@@ -23,6 +23,9 @@ log = logging.getLogger(__name__)
 
 
 CONFIGS = load_config()
+ENV_VARS: Dict[str, str] = CONFIGS["env"]
+PATHS: Dict[str, Any] = CONFIGS["paths"]
+ROUTES: Dict[str, Any] = CONFIGS["routes"]
 
 
 
@@ -31,18 +34,18 @@ class StravaClient:
     Handles Strava API interactions for accessing athlete data and activities.
     """
     def __init__(self):
-        load_envs(CONFIGS["paths"]["env"])
+        # Loading env. vars.
+        load_envs(PATHS.get("env"))
         
-        self.client_id = int(os.environ.get(CONFIGS["env"]["client_id"]))
-        self.client_secret = os.environ.get(CONFIGS["env"]["client_secret"])
+        self.client_id = int(environ.get(ENV_VARS.get("client_id")))
+        self.client_secret = environ.get(ENV_VARS.get("client_secret"))
         
-        host = CONFIGS["routes"]["host"]
-        port = CONFIGS["routes"]["port"]
+        host = ROUTES.get("host")
+        port = ROUTES.get("port")
         self.redirect = f"https://{host}:{port}"
         
-        self.token_file = Path(CONFIGS.get("paths").get("token")).resolve()
-        
-        create_directories(Path("data").resolve())
+        self.token_file = Path(PATHS.get("token")).resolve()
+        self.auth_code = ENV_VARS.get("code")
         
         self.client = Client()
         self._initiate_and_authorize()
@@ -52,7 +55,7 @@ class StravaClient:
         Initiates Strava API client and checks to see if authorization code is 
         already stored in env vars. If not, prompts to authorize.
         """
-        auth_code = os.environ.get(CONFIGS["env"]["code"])
+        auth_code = environ.get(self.auth_code)
         
         if not auth_code:
             url = self.client.authorization_url(
@@ -65,7 +68,7 @@ class StravaClient:
                 f"Follow the following link: {url}\n"
                 "Code:"
             )
-            os.environ[CONFIGS["env"]["code"]] = auth_code
+            environ[self.auth_code] = auth_code
             
         try:
             access_token = self.client.exchange_code_for_token(

@@ -10,14 +10,13 @@
     "host": "localhost",
     "port": 8500
   },
-  "strava_endpoints": {
-    "auth": "https://www.strava.com/oauth/authorize",
-    "token": "https://www.strava.com/oauth/token",
-    "base": "https://www.strava.com/api/v3"
-  },
   "paths": {
     "env": "dotfiles/mediocre_miles.env",
-    "activity_data": "data/strava_data.csv",
+    "data": {
+      "activity_data": "data/strava_data.csv",
+      "athlete_stats": "data/athlete_stats.json",
+      "hr_zones": "data/hr_zones.csv"
+    },
     "token": "strava_token.json"
   }
 }

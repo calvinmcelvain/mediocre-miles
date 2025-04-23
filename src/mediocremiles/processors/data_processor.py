@@ -14,6 +14,7 @@ from src.mediocremiles.models.activity import ActivityModel
 
 
 CONFIGS = load_config()
+DATA_PATHS = CONFIGS["paths"]["data"]
 
 
 
@@ -21,7 +22,7 @@ class ActivityProcessor:
     """
     Just a wrapper for activity data processing.
     """
-    activity_data_file = Path(CONFIGS.get("paths").get("data")).resolve()
+    activity_data_file = Path(DATA_PATHS.get("activity_data")).resolve()
 
     def export_activities_to_csv(self, activities: List[ActivityModel]) -> None:
         """
