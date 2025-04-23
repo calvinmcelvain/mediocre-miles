@@ -69,7 +69,7 @@ class AthleteStatistics:
     fetched_at: datetime
     
     @classmethod
-    def from_strava_stats(cls, strava_stats: AthleteStats) -> 'AthleteStats':
+    def from_strava_stats(cls, strava_stats: AthleteStats) -> 'AthleteStatistics':
         """
         convert stravalib AthleteStats object to our model (only diff. is the 
         fetch_date).
