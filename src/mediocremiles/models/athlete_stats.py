@@ -3,7 +3,7 @@ Contains the AthleteStatistics & ActivityTotal models.
 """
 # built-in.
 from dataclasses import dataclass, asdict
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from datetime import datetime
 
 # third-party.
@@ -64,8 +64,8 @@ class AthleteStatistics:
     all_ride_totals: Dict[str, Any]
     all_run_totals: Dict[str, Any]
     all_swim_totals: Dict[str, Any]
-    biggest_ride_distance: float
-    biggest_climb_elevation_gain: float
+    biggest_ride_distance: Optional[float]
+    biggest_climb_elevation_gain: Optional[float]
     fetched_at: datetime
     
     @classmethod
@@ -93,10 +93,10 @@ class AthleteStatistics:
                 strava_stats.all_run_totals).to_dict(),
             all_swim_totals=ActivityTotal.from_strava_total(
                 strava_stats.all_swim_totals).to_dict(),
-            biggest_ride_distance=float(getattr(
-                strava_stats, 'biggest_ride_distance', 0)),
-            biggest_climb_elevation_gain=float(getattr(
-                strava_stats, 'biggest_climb_elevation_gain', 0)),
+            biggest_ride_distance=getattr(
+                strava_stats, 'biggest_ride_distance', 0),
+            biggest_climb_elevation_gain=getattr(
+                strava_stats, 'biggest_climb_elevation_gain', 0),
             fetched_at=datetime.now()
         )
     
