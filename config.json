@@ -15,7 +15,7 @@
     "data": {
       "activity_data": "data/strava_data.csv",
       "athlete_stats": "data/athlete_stats.json",
-      "hr_zones": "data/hr_zones.csv"
+      "athlete_zones": "data/athlete_zones.json"
     },
     "token": "strava_token.json"
   }
