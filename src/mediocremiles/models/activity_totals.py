@@ -102,7 +102,7 @@ class AthleteStatistics:
     
     def to_dict(self) -> Dict[str, Any]:
         """
-        converts to dictionary for CSV export.
+        converts to dictionary for JSON export.
         """
         athlete_stats_dict = asdict(self)
         
