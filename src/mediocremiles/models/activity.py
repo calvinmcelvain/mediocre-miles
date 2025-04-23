@@ -35,7 +35,6 @@ class ActivityModel:
     shoe_total_distance: Optional[float] = None
     average_temp: Optional[int] = None
     city: Optional[str] = None
-    map_polyline: Optional[str] = None
     start_lat: Optional[float] = None
     start_lon: Optional[float] = None
     end_lat: Optional[float] = None
@@ -114,7 +113,6 @@ class ActivityModel:
             shoe_total_distance=shoe_total,
             average_temp=getattr(strava_activity, 'average_temp', None),
             city=getattr(strava_activity, 'location_city', None),
-            map_polyline=getattr(strava_activity, 'map_polyline', None),
             start_lat=start_lat,
             start_lon=start_lon,
             end_lat=end_lat,
