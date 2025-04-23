@@ -4,7 +4,7 @@ Contains the ActivityModel.
 
 # built-in
 from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional
 
 # third-party.
@@ -146,4 +146,10 @@ class ActivityModel:
         """
         Convert to dictionary for CSV export.
         """
+        activity_dict = asdict(self)
+        
+        if self.splits_standard:
+            for i, split in enumerate(self.splits):
+                activity_dict[f'split_{i+1}'] = split
+        
         return asdict(self)
