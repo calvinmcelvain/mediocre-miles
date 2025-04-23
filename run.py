@@ -7,14 +7,11 @@ from datetime import datetime, timedelta
 # local.
 from src.mediocremiles.strava_client import StravaClient
 from src.mediocremiles.models.activity import ActivityModel
-from src.mediocremiles.processors.data_processor import ActivityProcessor
-from src.mediocremiles.utils import get_date_n_days_ago, load_config
+from mediocremiles.processors.activity_processor import ActivityProcessor
+from src.mediocremiles.utils import get_date_n_days_ago
 
 
 log = logging.getLogger(__name__)
-
-
-CONFIG = load_config()
 
 
 
@@ -42,21 +39,29 @@ def authenticate_client() -> StravaClient:
 
 
 def fetch_activities(
-    client: StravaClient, after_date: Optional[datetime] = None
+    client: StravaClient, after_date: Optional[datetime] = None, 
+    detailed: bool = False
 ) -> List[ActivityModel]:
     """
     Fetch activities from Strava API after the specified date (if applicable).
+    Get detailed activity data if requested.
     """
     if after_date: log.info(f"Fetching activities after {after_date}...")
     
-    strava_activities = client.get_activities(after=after_date)
-    activities = [ActivityModel.from_strava_activity(a) for a in strava_activities]
+    summary_activities = client.get_activities(after=after_date)
     
-    if activities:
-        log.info(f"Fetched {len(activities)} activities from Strava API")
-    else:
+    if not summary_activities:
         log.info("No new activities found.")
+        return []
     
+    if detailed:
+        log.info(f"Fetching detailed data for {len(summary_activities)} activities...")
+        detailed_activities = client.get_detailed_activities(summary_activities)
+        activities = [ActivityModel.from_strava_activity(a) for a in detailed_activities]
+    else:
+        activities = [ActivityModel.from_strava_activity(a) for a in summary_activities]
+    
+    log.info(f"Fetched {len(activities)} activities from Strava API")
     return activities
 
 

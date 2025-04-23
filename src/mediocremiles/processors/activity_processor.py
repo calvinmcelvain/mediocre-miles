@@ -5,7 +5,7 @@ Contains the ActivityProcessor model.
 # built-in.
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 # third-party.
 import pandas as pd
@@ -14,7 +14,7 @@ from src.mediocremiles.models.activity import ActivityModel
 
 
 CONFIGS = load_config()
-DATA_PATHS = CONFIGS["paths"]["data"]
+DATA_PATHS: Dict[str, str] = CONFIGS["paths"]["data"]
 
 
 
