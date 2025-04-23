@@ -42,7 +42,6 @@ class StravaClient:
         self.redirect = f"https://{host}:{port}"
         
         self.token_file = Path(PATHS.get("token")).resolve()
-        self.auth_code = ENV_VARS.get("code")
         
         self.client = Client()
         self._initiate_and_authorize()
@@ -52,9 +51,7 @@ class StravaClient:
         Initiates Strava API client and checks to see if authorization code is 
         already stored in env vars. If not, prompts to authorize.
         """
-        auth_code = environ.get(self.auth_code)
-        
-        if not auth_code:
+        if not self.check_refresh():
             url = self.client.authorization_url(
                 client_id=self.client_id,
                 redirect_uri=self.redirect,
@@ -65,24 +62,23 @@ class StravaClient:
                 f"Follow the following link: {url}\n"
                 "Code:"
             ).strip()
-            environ[self.auth_code] = auth_code
             
-        try:
-            access_token = self.client.exchange_code_for_token(
-                client_id=self.client_id,
-                client_secret=self.client_secret,
-                code=str(auth_code)
-            )
-            
-            self.client.access_token = access_token["access_token"]
-            self.client.refresh_token = access_token["refresh_token"]
-            self.client.token_expires = access_token["expires_at"]
-            self._save_token_to_file(access_token)
-            
-            return self.client
-        except Exception as e:
-            print(f"Authorization failed: {str(e)}")
-            return None
+            try:
+                access_token = self.client.exchange_code_for_token(
+                    client_id=self.client_id,
+                    client_secret=self.client_secret,
+                    code=str(auth_code)
+                )
+                self._save_token_to_file(access_token)
+            except Exception as e:
+                print(f"Authorization failed: {str(e)}")
+                return None
+        
+        access_token = self._load_token_from_file()
+        self.client.access_token = access_token["access_token"]
+        self.client.refresh_token = access_token["refresh_token"]
+        self.client.token_expires = access_token["expires_at"]
+        return None
     
     def check_refresh(self) -> bool:
         """
