@@ -38,11 +38,6 @@ class AthleteProcessor:
         Fetch and export athlete zones (HR and Power) to JSON.
         """
         try:
-            athlete = client.get_athlete()
-            if not athlete:
-                log.warning("Could not retrieve athlete data")
-                return None
-            
             zones_data = client.client.get_athlete_zones()
             if not zones_data:
                 log.warning("No zones data available")
