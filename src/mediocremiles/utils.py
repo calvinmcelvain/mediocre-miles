@@ -3,21 +3,16 @@ Useful functions.
 """
 # built-in.
 import json
-import time
-import pickle
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, Union, List, Any, Optional, TypeVar
+from typing import Dict, Union, List, Any, TypeVar
 from pathlib import Path
 
 # third-party.
 from dotenv import load_dotenv
 
-# local.
-from src.mediocremiles.models.activity import ActivityModel
 
-
-log = logging.getLogger(__name__)
+log = logging.getLogger()
 
 T = TypeVar("T")
 
