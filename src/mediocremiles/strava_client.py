@@ -207,13 +207,15 @@ class StravaClient:
         self, activities: List[SummaryActivity]
     ) -> List[DetailedActivity]:
         """
-        Gets detailed activity data.
+        Gets detailed activity data with robust rate limit handling.
         """
         if not self.is_authenticated(): return None
-    
+
         # rate limit is 100 requests per 15min & 2000 per day.
         detailed_activities = []
-        retried = False
+        retry_count = 0
+        max_retries = 3
+        base_wait_time = 60
         
         pbar = tqdm(
             activities,
@@ -221,27 +223,62 @@ class StravaClient:
             unit="activity",
             ncols=80
         )
+        
         for activity in pbar:
             detailed_activity = None
-            while not detailed_activity:
+            current_retry = 0
+            
+            while not detailed_activity and current_retry <= max_retries:
                 try:
                     detailed_activity = self.client.get_activity(activity.id)
-                    detailed_activities.append(detailed_activity)
-                    retried = False
-                except (RateLimitTimeout, RateLimitExceeded):
-                    # If still rate limit exception, it means day rate limit reached.
-                    if retried:
+                    if detailed_activity:
+                        detailed_activities.append(detailed_activity)
+                        retry_count = 0
+                        
+                except (RateLimitTimeout, RateLimitExceeded) as e:
+                    retry_count += 1
+                    current_retry += 1
+                    
+                    # Calculate wait time with exponential backoff.
+                    # For first rate limit: 15 minutes (900 seconds).
+                    # For subsequent ones: longer.
+                    wait_time = 900 + base_wait_time * (2 ** (current_retry - 1))
+                    
+                    print(
+                        f"Rate limit exceeded ({str(e)}). Waiting for"
+                        f" {wait_time/60:.1f} minutes..."
+                    )
+                    
+                    pbar.set_description(f"Rate limited, waiting {wait_time/60:.1f}m")
+                    time.sleep(wait_time)
+                    
+                    pbar.set_description("Fetching detailed activities")
+                    
+                    if current_retry >= max_retries:
                         print(
-                            "Strava API rate day limit exceeded. Try again tomorrow."
+                            f"Max retries ({max_retries}) reached after rate"
+                            " limiting. Returning partial results."
                         )
                         adjusted_activities = activities[len(detailed_activities):]
                         return detailed_activities + adjusted_activities
-                    print("Strava API rate limit exceeded. Retrying...")
-                    retried = True
+                        
                 except Exception as e:
                     print(f"Got exception: {str(e)}")
+                    
+                    # Check specifically for HTTP 429 error.
+                    if "429" in str(e) and "Too Many Requests" in str(e):
+                        print(
+                            "Detected 429 Too Many Requests error."
+                            " Waiting for 15 minutes..."
+                        )
+                        pbar.set_description("Rate limited, waiting 15m")
+                        time.sleep(900)
+                        pbar.set_description("Fetching detailed activities")
+                        continue
+                    
                     adjusted_activities = activities[len(detailed_activities):]
-                    return detailed_activities + adjusted_activities
+                    return detailed_activities + adjusted_activities           
+        
         return detailed_activities
     
     def is_authenticated(self) -> bool:
