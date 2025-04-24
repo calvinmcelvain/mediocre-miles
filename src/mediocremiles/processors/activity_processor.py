@@ -47,15 +47,22 @@ class ActivityProcessor:
         new_activities = []
         for a in activities:
             dumped = a.model_dump()
+            splits = False
             if hasattr(a, 'splits_standard'):
-                for i, split in enumerate(a.splits_standard):
-                    dumped[f'split_{i+1}_time'] = split.moving_time
-                    dumped[f'split_{i+1}_avghr'] = split.average_heartrate
-                    dumped[f'split_{i+1}_distance'] = unit_helper.miles(split.distance).magnitude
-                    dumped[f'split_{i+1}_pace'] = unit_helper.miles_per_hour(split.average_speed).magnitude
-                    dumped[f'split_{i+1}_elevation'] = unit_helper.feet(split.elevation_difference).magnitude
+                miles = 0
+                splits = True
+                for split in a.splits_standard:
+                    distance = unit_helper.miles(split.distance).magnitude
+                    miles += distance
+                    dumped['total_split_distance'] = miles
+                    dumped['split_time'] = split.moving_time
+                    dumped['split_avghr'] = split.average_heartrate
+                    dumped['split_distance'] = distance
+                    dumped['split_pace'] = unit_helper.miles_per_hour(split.average_speed).magnitude
+                    dumped['split_elevation'] = unit_helper.feet(split.elevation_difference).magnitude
+                    new_activities.append(dumped)
                 del dumped["splits_standard"]
-            new_activities.append(dumped)
+            if not splits: new_activities.append(dumped)
         return new_activities
     
     def update_activities_csv(self, new_activities: List[ActivityModel]) -> None:
