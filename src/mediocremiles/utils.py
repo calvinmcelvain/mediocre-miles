@@ -4,7 +4,7 @@ Useful functions.
 # built-in.
 import json
 from datetime import datetime, timedelta
-from typing import Dict, Union, List, Any, TypeVar
+from typing import Dict, Union, List, Any, TypeVar, Literal
 from pathlib import Path
 
 # third-party.
@@ -76,3 +76,39 @@ def get_date_n_days_ago(days: int = 30) -> datetime:
     Get datetime object for n days ago.
     """
     return datetime.now() - timedelta(days=days)
+
+
+def convert_distance(
+    meters: float, unit: Literal["m", "km", "mi", "ft"]) -> float:
+    """
+    Convert meters to kilometers, miles, and feet.
+    """
+    km = meters / 1000
+    miles = meters *  0.00062137119223733
+    feet = meters * 3.28083989501312
+    
+    factor = {
+        "m": meters,
+        "km": km,
+        "mi": miles,
+        "ft": feet
+    }
+    
+    return factor[unit]
+
+
+def convert_speed(
+    meters_per_sec: float, unit: Literal["m", "km", "mi"]) -> float:
+    """
+    Convert meters/second to km/hour and miles/hour.
+    """
+    km_per_hour = meters_per_sec * 3.6
+    miles_per_hour = meters_per_sec * 2.2369362920544
+    
+    factor = {
+        "m": meters_per_sec,
+        "km": km_per_hour,
+        "mi": miles_per_hour
+    }
+    
+    return factor[unit]

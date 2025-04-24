@@ -4,6 +4,7 @@ Contains the StravaClient model.
 # built-in.
 import time
 import json
+from tqdm import tqdm
 from os import environ
 from typing import Optional, List, Dict, Any
 from pathlib import Path
@@ -200,7 +201,6 @@ class StravaClient:
                     return None
                 print("Strava API rate limit exceeded. Retrying...")
                 retried = True
-        
         return list(activities)
     
     def get_detailed_activities(
@@ -210,11 +210,18 @@ class StravaClient:
         Gets detailed activity data.
         """
         if not self.is_authenticated(): return None
-        
+    
         # rate limit is 100 requests per 15min & 2000 per day.
         detailed_activities = []
         retried = False
-        for activity in activities:
+        
+        pbar = tqdm(
+            activities,
+            desc="Fetching detailed activities",
+            unit="activity",
+            ncols=80
+        )
+        for activity in pbar:
             detailed_activity = None
             while not detailed_activity:
                 try:
@@ -222,8 +229,7 @@ class StravaClient:
                     detailed_activities.append(detailed_activity)
                     retried = False
                 except (RateLimitTimeout, RateLimitExceeded):
-                    # If still rate limit exception, it means day rate limit 
-                    # reached.
+                    # If still rate limit exception, it means day rate limit reached.
                     if retried:
                         print(
                             "Strava API rate day limit exceeded. Try again tomorrow."

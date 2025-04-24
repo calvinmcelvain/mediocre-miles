@@ -2,14 +2,14 @@
 Contains the ActivityProcessor model.
 """
 # built-in.
-from datetime import datetime
+import copy
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional, Dict
 
 # third-party.
 import pandas as pd
-from stravalib import unit_helper
-from src.mediocremiles.utils import load_config
+from src.mediocremiles.utils import load_config, convert_distance, convert_speed
 from src.mediocremiles.models.activity import ActivityModel
 
 
@@ -47,15 +47,26 @@ class ActivityProcessor:
         new_activities = []
         for a in activities:
             dumped = a.model_dump()
+            splits = False
             if hasattr(a, 'splits_standard'):
-                for i, split in enumerate(a.splits_standard):
-                    dumped[f'split_{i+1}_time'] = split.moving_time
-                    dumped[f'split_{i+1}_avghr'] = split.average_heartrate
-                    dumped[f'split_{i+1}_distance'] = unit_helper.miles(split.distance).magnitude
-                    dumped[f'split_{i+1}_pace'] = unit_helper.miles_per_hour(split.average_speed).magnitude
-                    dumped[f'split_{i+1}_elevation'] = unit_helper.feet(split.elevation_difference).magnitude
-                del dumped["splits_standard"]
-            new_activities.append(dumped)
+                miles = 0
+                split_tottime = dumped["start_date"]
+                splits = True
+                for split in a.splits_standard:
+                    distance = convert_distance(split.distance, "mi")
+                    split_tottime += timedelta(seconds=split.moving_time)
+                    miles += distance
+                    dumped['split_cuml_distance'] = miles
+                    dumped['split_cuml_time'] = split_tottime.isoformat()
+                    dumped['split_time'] = split.moving_time / 60
+                    dumped['split_avghr'] = split.average_heartrate
+                    dumped['split_distance'] = distance
+                    dumped['split_pace'] = convert_speed(split.average_speed, "mi")
+                    dumped['split_elevation'] = convert_distance(split.elevation_difference, "ft")
+                    dumped_copy = copy.deepcopy(dumped)
+                    del dumped_copy["splits_standard"]
+                    new_activities.append(dumped_copy)
+            if not splits: new_activities.append(dumped)
         return new_activities
     
     def update_activities_csv(self, new_activities: List[ActivityModel]) -> None:
@@ -68,7 +79,11 @@ class ActivityProcessor:
             try:
                 existing_df = pd.read_csv(self.activity_data_file)
                 combined_df = pd.concat([existing_df, new_df], ignore_index=True)
-                combined_df = combined_df.drop_duplicates(subset=['id'], keep='last')
+                # If detailed activities, need additional condition for dropping duplicates
+                try:
+                    combined_df = combined_df.drop_duplicates(subset=['id', 'split_cuml_time'], keep='last')
+                except Exception:
+                    combined_df = combined_df.drop_duplicates(subset=['id'], keep='last')
             except FileNotFoundError:
                 combined_df = new_df
             
@@ -77,7 +92,7 @@ class ActivityProcessor:
                 combined_df = combined_df.sort_values('start_date', ascending=False)
             
             combined_df.to_csv(self.activity_data_file, index=False)
-            print(f"Updated CSV with {len(new_df)} activities")
+            print(f"Updated CSV with {len(new_df)} rows")
             print(
                 "All activities have been saved to:"
                 f" {self.activity_data_file.as_posix()}"
