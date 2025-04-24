@@ -8,7 +8,7 @@ from datetime import datetime
 # third-party.
 from stravalib import unit_helper
 from stravalib.model import AthleteStats
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field
 
 
 
@@ -20,18 +20,22 @@ class ActivityTotal(BaseModel):
     elevation_gain: float
     achievement_count: int
     
+    @computed_field
     @property
     def distance_km(self) -> float:
         return unit_helper.kilometers(self.distance).magnitude
     
+    @computed_field
     @property
     def distance_miles(self) -> float:
         return unit_helper.miles(self.distance).magnitude
     
+    @computed_field
     @property
     def moving_time_hours(self) -> float:
         return unit_helper.hours(self.moving_time).magnitude
     
+    @computed_field
     @property
     def elapsed_time_hours(self) -> float:
         return unit_helper.hours(self.elapsed_time).magnitude
