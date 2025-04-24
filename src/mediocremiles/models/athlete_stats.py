@@ -6,7 +6,7 @@ from typing import Any, Optional
 from datetime import datetime
 
 # third-party.
-from stravalib import unit_helper
+from src.mediocremiles.utils import convert_distance
 from stravalib.model import AthleteStats
 from pydantic import BaseModel, computed_field
 
@@ -23,22 +23,22 @@ class ActivityTotal(BaseModel):
     @computed_field
     @property
     def distance_km(self) -> float:
-        return unit_helper.kilometers(self.distance).magnitude
+        return float(convert_distance(self.distance, "km"))
     
     @computed_field
     @property
     def distance_miles(self) -> float:
-        return unit_helper.miles(self.distance).magnitude
+        return float(convert_distance(self.distance, "mi"))
     
     @computed_field
     @property
     def moving_time_hours(self) -> float:
-        return unit_helper.hours(self.moving_time).magnitude
+        return float(self.moving_time / 3600)
     
     @computed_field
     @property
     def elapsed_time_hours(self) -> float:
-        return unit_helper.hours(self.elapsed_time).magnitude
+        return float(self.elapsed_time / 3600)
     
     @classmethod
     def from_strava_total(cls, strava_total: Any) -> 'ActivityTotal':
