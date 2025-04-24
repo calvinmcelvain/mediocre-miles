@@ -2,6 +2,7 @@
 Contains the ActivityProcessor model.
 """
 # built-in.
+import copy
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional, Dict
@@ -50,7 +51,7 @@ class ActivityProcessor:
             splits = False
             if hasattr(a, 'splits_standard'):
                 miles = 0
-                split_tottime = datetime.fromisoformat(dumped["start_date"])
+                split_tottime = dumped["start_date"]
                 splits = True
                 for split in a.splits_standard:
                     distance = unit_helper.miles(split.distance).magnitude
@@ -63,8 +64,9 @@ class ActivityProcessor:
                     dumped['split_distance'] = distance
                     dumped['split_pace'] = unit_helper.miles_per_hour(split.average_speed).magnitude
                     dumped['split_elevation'] = unit_helper.feet(split.elevation_difference).magnitude
-                    new_activities.append(dumped)
-                del dumped["splits_standard"]
+                    dumped_copy = copy.deepcopy(dumped)
+                    del dumped_copy["splits_standard"]
+                    new_activities.append(dumped_copy)
             if not splits: new_activities.append(dumped)
         return new_activities
     
@@ -78,7 +80,7 @@ class ActivityProcessor:
             try:
                 existing_df = pd.read_csv(self.activity_data_file)
                 combined_df = pd.concat([existing_df, new_df], ignore_index=True)
-                combined_df = combined_df.drop_duplicates(subset=['id'], keep='last')
+                combined_df = combined_df.drop_duplicates(subset=['id', 'split_cumtime'], keep='last')
             except FileNotFoundError:
                 combined_df = new_df
             
@@ -87,7 +89,7 @@ class ActivityProcessor:
                 combined_df = combined_df.sort_values('start_date', ascending=False)
             
             combined_df.to_csv(self.activity_data_file, index=False)
-            print(f"Updated CSV with {len(new_df)} activities")
+            print(f"Updated CSV with {len(new_df)} rows")
             print(
                 "All activities have been saved to:"
                 f" {self.activity_data_file.as_posix()}"
