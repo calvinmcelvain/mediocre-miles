@@ -20,19 +20,23 @@ WorkoutType = Literal["run", "ride"]
 
 def fetch_activities(
     client: StravaClient, 
-    after_date: Optional[datetime] = None, 
+    after_date: Optional[datetime] = None,
+    before_date: Optional[datetime] = None,
     detailed: bool = False,
     activity_type: Optional[WorkoutType] = None
 ) -> List[ActivityModel]:
     """
-    Fetch activities from Strava API after the specified date (if applicable).
+    Fetch activities from Strava API after and/or before specified dates (if 
+    applicable).
     Get detailed activity data if requested.
     Filter by activity_type if specified.
     """
     if after_date: print(f"Fetching activities after {after_date}...")
+    if before_date: print(f"Fetching activities before {before_date}...")
     if activity_type: print(f"Filtering activities to type: {activity_type}")
     
-    summary_activities = client.get_activities(after=after_date)
+    summary_activities = client.get_activities(
+        after=after_date, before=before_date)
     
     if not summary_activities:
         print("No new activities found.")
@@ -76,6 +80,8 @@ def main():
                        help='Export athlete statistics to JSON')
     parser.add_argument('--type', type=str, choices=list(WorkoutType.__args__),
                        help='Filter activities by type (run or ride)')
+    parser.add_argument('--before', type=str,
+                       help='Fetch activities before this date (YYYY-MM-DD format)')
     args = parser.parse_args()
     
     client = StravaClient()
@@ -87,6 +93,14 @@ def main():
     if args.athlete_stats: AthleteProcessor().export_athlete_stats(client)
     
     after_date = None
+    before_date = None
+    
+    if args.before:
+        try:
+            before_date = datetime.strptime(args.before, '%Y-%m-%d')
+        except ValueError:
+            print("Error: --before date must be in YYYY-MM-DD format")
+            return
     
     if args.all: 
         print("Fetching all activities...")
@@ -106,7 +120,8 @@ def main():
     
     activities = fetch_activities(
         client, 
-        after_date, 
+        after_date,
+        before_date,
         args.detailed, 
         args.type
     )
