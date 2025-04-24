@@ -25,6 +25,7 @@ class ActivityModel(BaseModel):
     average_speed_meters_sec: float
     max_speed_meters_sec: float
     kudos_count: int
+    workout_type: Optional[int]
     pr_count: Optional[int]
     average_heartrate: Optional[float]
     max_heartrate: Optional[float]
@@ -147,6 +148,7 @@ class ActivityModel(BaseModel):
             average_speed_meters_sec=getattr(strava_activity, 'average_speed', None),
             max_speed_meters_sec=getattr(strava_activity, 'max_speed', None),
             kudos_count=getattr(strava_activity, 'kudos_count', None),
+            workout_type=getattr(strava_activity, 'workout_type', None),
             pr_count=getattr(strava_activity, 'pr_count', None),
             average_heartrate=getattr(strava_activity, 'average_heartrate', None),
             max_heartrate=getattr(strava_activity, 'max_heartrate', None),
