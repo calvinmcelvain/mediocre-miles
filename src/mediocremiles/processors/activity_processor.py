@@ -2,7 +2,7 @@
 Contains the ActivityProcessor model.
 """
 # built-in.
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional, Dict
 
@@ -50,12 +50,15 @@ class ActivityProcessor:
             splits = False
             if hasattr(a, 'splits_standard'):
                 miles = 0
+                split_tottime = datetime.fromisoformat(dumped["start_date"])
                 splits = True
                 for split in a.splits_standard:
                     distance = unit_helper.miles(split.distance).magnitude
+                    split_tottime += timedelta(seconds=split.moving_time)
                     miles += distance
                     dumped['total_split_distance'] = miles
-                    dumped['split_time'] = split.moving_time
+                    dumped['split_cumtime'] = split_tottime.isoformat()
+                    dumped['split_time'] = split.moving_time / 60
                     dumped['split_avghr'] = split.average_heartrate
                     dumped['split_distance'] = distance
                     dumped['split_pace'] = unit_helper.miles_per_hour(split.average_speed).magnitude
