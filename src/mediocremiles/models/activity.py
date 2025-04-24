@@ -128,7 +128,7 @@ class ActivityModel(BaseModel):
         gear = getattr(strava_activity, 'gear', None)
         shoe = shoe_total = None
         if gear:
-            shoe = gear.shoe
+            shoe = gear.name
             shoe_total = unit_helper.miles(gear.distance).magnitude
         
         # Strava reports cadence as RPM. Converting to SPM if not Ride type.
