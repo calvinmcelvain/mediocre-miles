@@ -8,7 +8,6 @@ from typing import Optional
 
 # third-party.
 from src.mediocremiles.utils import convert_distance, convert_speed
-from src.mediocremiles.meteostat_client import MeteostatClient
 from stravalib.model import DetailedActivity
 from pydantic import BaseModel, computed_field
 
