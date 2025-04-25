@@ -15,17 +15,18 @@ from pydantic import BaseModel, computed_field
 
 class ActivityModel(BaseModel):
     id: int
-    name: str
-    activity_type: str
-    start_date: datetime
-    timezone: str
-    total_distance_meters: float
-    total_moving_time_seconds: int
-    total_elapsed_time_seconds: int
-    total_elevation_gain_meters: float
-    average_speed_meters_sec: float
-    max_speed_meters_sec: float
-    kudos_count: int
+    name: Optional[str]
+    activity_type: Optional[str]
+    start_date: Optional[datetime]
+    start_date_local: Optional[datetime]
+    timezone: Optional[str]
+    total_distance_meters: Optional[float]
+    total_moving_time_seconds: Optional[int]
+    total_elapsed_time_seconds: Optional[int]
+    total_elevation_gain_meters: Optional[float]
+    average_speed_meters_sec: Optional[float]
+    max_speed_meters_sec: Optional[float]
+    kudos_count: Optional[int]
     workout_type: Optional[int]
     pr_count: Optional[int]
     average_heartrate: Optional[float]
@@ -138,10 +139,11 @@ class ActivityModel(BaseModel):
             cadence *= 2
         
         return cls(
-            id=getattr(strava_activity, 'id', None),
+            id=strava_activity.id,
             name=getattr(strava_activity, 'name', None),
             activity_type=getattr(getattr(strava_activity, 'type'), 'root', None),
             start_date=getattr(strava_activity, 'start_date', None),
+            start_date_local=getattr(strava_activity, 'start_date_local', None),
             timezone=getattr(strava_activity, 'timezone', None),
             total_distance_meters=getattr(strava_activity, 'distance', None),
             total_moving_time_seconds=getattr(strava_activity, 'moving_time', None),
