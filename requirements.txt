@@ -5,3 +5,4 @@ python-dotenv==1.1.0
 python-dateutil==2.9.0
 typing_extensions==4.13.2
 tqdm==4.67.1
+meteostat==1.6.8
