@@ -8,6 +8,7 @@ from typing import Optional
 
 # third-party.
 from src.mediocremiles.utils import convert_distance, convert_speed
+from src.mediocremiles.meteostat_client import MeteostatClient
 from stravalib.model import DetailedActivity
 from pydantic import BaseModel, computed_field
 
@@ -33,8 +34,6 @@ class ActivityModel(BaseModel):
     average_cadence: Optional[float]
     shoes: Optional[str]
     shoe_total_distance: Optional[float]
-    average_temp: Optional[int]
-    city: Optional[str]
     calories: Optional[float]
     start_lat: Optional[float] 
     start_lon: Optional[float] 
@@ -158,8 +157,6 @@ class ActivityModel(BaseModel):
             average_cadence=cadence,
             shoes=shoe,
             shoe_total_distance=shoe_total,
-            average_temp=getattr(strava_activity, 'average_temp', None),
-            city=getattr(strava_activity, 'location_city', None),
             calories=getattr(strava_activity, 'calories', None),
             start_lat=start_lat,
             start_lon=start_lon,
