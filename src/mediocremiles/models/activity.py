@@ -18,7 +18,6 @@ class ActivityModel(BaseModel):
     name: Optional[str]
     activity_type: Optional[str]
     start_date: Optional[datetime]
-    start_date_local: Optional[datetime]
     timezone: Optional[str]
     total_distance_meters: Optional[float]
     total_moving_time_seconds: Optional[int]
@@ -105,7 +104,8 @@ class ActivityModel(BaseModel):
     @computed_field
     @property
     def starting_week(self) -> datetime:
-        return self.start_date - timedelta(days=self.start_date.weekday())
+        week = self.start_date - timedelta(days=self.start_date.weekday())
+        return week.date()
     
     @computed_field
     @property
@@ -143,7 +143,6 @@ class ActivityModel(BaseModel):
             name=getattr(strava_activity, 'name', None),
             activity_type=getattr(getattr(strava_activity, 'type'), 'root', None),
             start_date=getattr(strava_activity, 'start_date', None),
-            start_date_local=getattr(strava_activity, 'start_date_local', None),
             timezone=getattr(strava_activity, 'timezone', None),
             total_distance_meters=getattr(strava_activity, 'distance', None),
             total_moving_time_seconds=getattr(strava_activity, 'moving_time', None),

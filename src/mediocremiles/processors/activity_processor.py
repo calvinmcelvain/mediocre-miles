@@ -3,6 +3,7 @@ Contains the ActivityProcessor model.
 """
 # built-in.
 import copy
+import pytz
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional, Dict
@@ -49,6 +50,10 @@ class ActivityProcessor:
         """
         new_activities = []
         for a in activities:
+            # Adjusting for timezone.
+            tz = a.timezone.split(') ')[1] if a.timezone else 'UTC'
+            a.start_date = a.start_date.astimezone(pytz.timezone(tz))
+            
             dumped = a.model_dump()
             splits = False
             if a.splits_standard:
@@ -60,7 +65,7 @@ class ActivityProcessor:
                     split_tottime += timedelta(seconds=split.moving_time)
                     miles += distance
                     dumped['split_cuml_distance'] = miles
-                    dumped['split_cuml_time'] = split_tottime.isoformat()
+                    dumped['split_cuml_time'] = split_tottime
                     dumped['split_time'] = split.moving_time / 60
                     dumped['split_avghr'] = split.average_heartrate
                     dumped['split_distance'] = distance
@@ -125,7 +130,7 @@ class ActivityProcessor:
             
             # Sort on date and cummulative split time.
             combined_df['start_date'] = pd.to_datetime(combined_df['start_date'])
-            combined_df['split_cuml_time'] = pd.to_datetime(combined_df['split_cuml_time'], format='ISO8601')
+            combined_df['split_cuml_time'] = pd.to_datetime(combined_df['split_cuml_time'])
             combined_df = combined_df.sort_values(['start_date', 'split_cuml_time'], ascending=False)
             
             combined_df.to_csv(self.activity_data_file, index=False)
