@@ -18,6 +18,7 @@ class ActivityModel(BaseModel):
     name: str
     activity_type: str
     start_date: datetime
+    timezone: str
     total_distance_meters: float
     total_moving_time_seconds: int
     total_elapsed_time_seconds: int
@@ -141,6 +142,7 @@ class ActivityModel(BaseModel):
             name=getattr(strava_activity, 'name', None),
             activity_type=getattr(getattr(strava_activity, 'type'), 'root', None),
             start_date=getattr(strava_activity, 'start_date', None),
+            timezone=getattr(strava_activity, 'timezone', None),
             total_distance_meters=getattr(strava_activity, 'distance', None),
             total_moving_time_seconds=getattr(strava_activity, 'moving_time', None),
             total_elapsed_time_seconds=getattr(strava_activity, 'elapsed_time', None),
