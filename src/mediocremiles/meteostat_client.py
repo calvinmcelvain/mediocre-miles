@@ -33,7 +33,7 @@ class MeteostatClient:
         try:
             # Create a Point and fetch data.
             point = self._create_point(latitude, longitude, altitude)
-            data = Hourly(point, start_date, start_date + timedelta(days=1))
+            data = Hourly(point, start_date, start_date + timedelta(hours=1))
             weather_data = data.fetch()
             
             if weather_data.empty:
@@ -74,6 +74,7 @@ class MeteostatClient:
         df.loc[:, "snow_inch"] = df["snow"].apply(convert_distance, unit="inch")
         df.loc[:, "wspd_mph"] = df["wspd"].apply(convert_speed, unit="mi")
         df.loc[:, "wpgt_mph"] = df["wpgt"].apply(convert_speed, unit="mi")
+        df = df.drop(["coco"], axis=1)
         return df
     
     def _map_condition_code(self, code: int) -> str:
