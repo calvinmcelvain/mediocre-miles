@@ -1,9 +1,11 @@
 # built-in.
 import argparse
+from tqdm import tqdm
 from typing import Optional, List, Literal
 from datetime import datetime, timedelta
 
 # local.
+import src.mediocremiles.errors as exe
 from src.mediocremiles.strava_client import StravaClient
 from src.mediocremiles.models.activity import ActivityModel
 from src.mediocremiles.processors.activity_processor import ActivityProcessor
@@ -31,18 +33,20 @@ def fetch_activities(
     Get detailed activity data if requested.
     Filter by activity_type if specified.
     """
-    if after_date: print(f"Fetching activities after {after_date}...")
-    if before_date: print(f"Fetching activities before {before_date}...")
-    if activity_type: print(f"Filtering activities to type: {activity_type}")
+    processor = ActivityProcessor()
     
     summary_activities = client.get_activities(
         after=after_date, before=before_date)
     
     if not summary_activities:
         print("No new activities found.")
-        return []
+        return None
+    
+    print(f"Fetched {len(summary_activities)} summary activities from Strava API")
     
     if activity_type:
+        print(f"Filtering activities to type: {activity_type}")
+        
         filtered_activities = list(filter(
             lambda a: a.type.root.lower() == activity_type.lower(),
             summary_activities
@@ -53,17 +57,38 @@ def fetch_activities(
     
     if not summary_activities:
         print(f"No {activity_type} activities found after filtering.")
-        return []
+        return None
+    
+    activities = [ActivityModel.from_strava_activity(a) for a in summary_activities]
+    process = processor.update_new_activities_csv(activities)
+    
+    assert not isinstance(process, exe.CSVUpdateError)
     
     if detailed:
         print(f"Fetching detailed data for {len(summary_activities)} activities...")
-        detailed_activities = client.get_detailed_activities(summary_activities)
-        activities = [ActivityModel.from_strava_activity(a) for a in detailed_activities]
-    else:
-        activities = [ActivityModel.from_strava_activity(a) for a in summary_activities]
-    
-    print(f"Fetched {len(activities)} activities from Strava API")
-    return activities
+        
+        pbar = tqdm(
+            summary_activities,
+            desc="Fetching detailed activities",
+            unit="activity",
+            ncols=120
+        )
+        
+        for activity in pbar:
+            detailed_activity = client.get_detailed_activity(activity)
+            
+            if detailed_activity: 
+                activity_model = ActivityModel.from_strava_activity(detailed_activity)
+                process = processor.update_csv_detailed_activity(activity_model)
+                assert not isinstance(process, exe.CSVUpdateError)
+            else:
+                last_activity_idx = summary_activities.index(activity) - 1
+                last_activity = summary_activities[last_activity_idx]
+                print(
+                    "Error occured. Couldn't fetch all detailed activities."
+                    f" Last detailed activity fetched: {last_activity.model_dump()}"
+                )
+    return None
 
 
 def main():
@@ -98,6 +123,7 @@ def main():
     if args.before:
         try:
             before_date = datetime.strptime(args.before, '%Y-%m-%d')
+            print(f"Fetching activities before {before_date.isoformat()}.")
         except ValueError:
             print("Error: --before date must be in YYYY-MM-DD format")
             return
@@ -118,19 +144,13 @@ def main():
             after_date = get_date_n_days_ago(30)
             print("Fetching activities from the last 30 days...")
     
-    activities = fetch_activities(
+    fetch_activities(
         client, 
         after_date,
         before_date,
         args.detailed, 
         args.type
     )
-    
-    if not activities:
-        print("No activities to export.")
-        return
-    
-    ActivityProcessor().update_activities_csv(activities)
 
 
 if __name__ == "__main__":

@@ -12,6 +12,9 @@ import pandas as pd
 from src.mediocremiles.utils import load_config, convert_distance, convert_speed
 from src.mediocremiles.models.activity import ActivityModel
 
+# local.
+import src.mediocremiles.errors as exe
+
 
 CONFIGS = load_config()
 DATA_PATHS: Dict[str, str] = CONFIGS["paths"]["data"]
@@ -33,7 +36,7 @@ class ActivityProcessor:
             if df.empty or 'start_date' not in df.columns:
                 return None
             df['start_date'] = pd.to_datetime(df['start_date'])
-            return df['start_date'].max().to_pydatetime()
+            return df['start_date'].max()
         except (FileNotFoundError, Exception):
             print("No existing CSV found.")
             return None
@@ -48,7 +51,7 @@ class ActivityProcessor:
         for a in activities:
             dumped = a.model_dump()
             splits = False
-            if hasattr(a, 'splits_standard'):
+            if a.splits_standard:
                 miles = 0
                 split_tottime = dumped["start_date"]
                 splits = True
@@ -66,38 +69,68 @@ class ActivityProcessor:
                     dumped_copy = copy.deepcopy(dumped)
                     del dumped_copy["splits_standard"]
                     new_activities.append(dumped_copy)
-            if not splits: new_activities.append(dumped)
+            if not splits:
+                del dumped["splits_standard"]
+                new_activities.append(dumped)
         return new_activities
     
-    def update_activities_csv(self, new_activities: List[ActivityModel]) -> None:
+    def update_new_activities_csv(self, new_activities: List[ActivityModel]) -> None:
         """
         Update CSV with new activities, avoiding duplicates.
         """
         try:
             new_df = pd.DataFrame(self._dump_activities(new_activities))
-            
             try:
                 existing_df = pd.read_csv(self.activity_data_file)
                 combined_df = pd.concat([existing_df, new_df], ignore_index=True)
-                # If detailed activities, need additional condition for dropping duplicates
+                
+                # If existing detailed activities, need additional condition for 
+                # dropping duplicates.
                 try:
-                    combined_df = combined_df.drop_duplicates(subset=['id', 'split_cuml_time'], keep='last')
+                    combined_df = combined_df.drop_duplicates(
+                        subset=['id', 'split_cuml_time'], keep='last')
                 except Exception:
                     combined_df = combined_df.drop_duplicates(subset=['id'], keep='last')
             except FileNotFoundError:
                 combined_df = new_df
             
-            if 'start_date' in combined_df.columns:
-                combined_df['start_date'] = pd.to_datetime(combined_df['start_date'])
-                combined_df = combined_df.sort_values('start_date', ascending=False)
+            combined_df['start_date'] = pd.to_datetime(combined_df['start_date'])
+            combined_df = combined_df.sort_values('start_date', ascending=False)
             
             combined_df.to_csv(self.activity_data_file, index=False)
-            print(f"Updated CSV with {len(new_df)} rows")
+            print(f"Updated CSV with {len(new_df)} activities.")
             print(
                 "All activities have been saved to:"
                 f" {self.activity_data_file.as_posix()}"
             )
-            
+            return None
         except Exception as e:
             print(f"Error updating CSV: {e}")
-            return new_activities
+            return exe.CSVUpdateError
+
+    def update_csv_detailed_activity(self, detailed_activity: ActivityModel) -> None:
+        """
+        Update CSV with a detailed activity.
+        """
+        try:
+            new_df = pd.DataFrame(self._dump_activities([detailed_activity]))
+            
+            existing_df = pd.read_csv(self.activity_data_file)
+            
+            # removing the summary activities from og df
+            detailed_ids = new_df["id"].unique().tolist()
+            existing_df = existing_df[~(existing_df["id"].isin(detailed_ids))]
+            
+            combined_df = pd.concat([existing_df, new_df], ignore_index=True)
+            
+            # Sort on date and cummulative split time.
+            combined_df['start_date'] = pd.to_datetime(combined_df['start_date'])
+            combined_df['split_cuml_time'] = pd.to_datetime(combined_df['split_cuml_time'], format='ISO8601')
+            combined_df = combined_df.sort_values(['start_date', 'split_cuml_time'], ascending=False)
+            
+            combined_df.to_csv(self.activity_data_file, index=False)
+            # no logs since iteration.
+            return None
+        except Exception as e:
+            print(f"Error updating CSV: {e}")
+            return exe.CSVUpdateError

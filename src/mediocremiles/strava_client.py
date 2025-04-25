@@ -203,8 +203,8 @@ class StravaClient:
                 retried = True
         return list(activities)
     
-    def get_detailed_activities(
-        self, activities: List[SummaryActivity]
+    def get_detailed_activity(
+        self, activity: SummaryActivity
     ) -> List[DetailedActivity]:
         """
         Gets detailed activity data with robust rate limit handling.
@@ -212,74 +212,58 @@ class StravaClient:
         if not self.is_authenticated(): return None
 
         # rate limit is 100 requests per 15min & 2000 per day.
-        detailed_activities = []
+        detailed_activity = None
         retry_count = 0
         max_retries = 3
         base_wait_time = 60
         
-        pbar = tqdm(
-            activities,
-            desc="Fetching detailed activities",
-            unit="activity",
-            ncols=80
-        )
+        current_retry = 0
         
-        for activity in pbar:
-            detailed_activity = None
-            current_retry = 0
-            
-            while not detailed_activity and current_retry <= max_retries:
-                try:
-                    detailed_activity = self.client.get_activity(activity.id)
-                    if detailed_activity:
-                        detailed_activities.append(detailed_activity)
-                        retry_count = 0
-                        
-                except (RateLimitTimeout, RateLimitExceeded) as e:
+        while not detailed_activity and current_retry <= max_retries:
+            try:
+                detailed_activity = self.client.get_activity(activity.id)
+            except Exception as e:
+                print(f"Got exception: {str(e)}")
+                
+                # Check specifically for HTTP 429 error.
+                if "429" in str(e) and "Too Many Requests" in str(e):
+                    print(
+                        "Detected 429 Too Many Requests error."
+                        " Waiting for 15 minutes..."
+                    )
                     retry_count += 1
                     current_retry += 1
                     
                     # Calculate wait time with exponential backoff.
-                    # For first rate limit: 15 minutes (900 seconds).
-                    # For subsequent ones: longer.
                     wait_time = 900 + base_wait_time * (2 ** (current_retry - 1))
                     
                     print(
-                        f"Rate limit exceeded ({str(e)}). Waiting for"
-                        f" {wait_time/60:.1f} minutes..."
+                        f"Rate limit exceeded ({str(e)})."
+                        f" Waiting for {wait_time/60:.1f} minutes..."
                     )
                     
-                    pbar.set_description(f"Rate limited, waiting {wait_time/60:.1f}m")
-                    time.sleep(wait_time)
-                    
-                    pbar.set_description("Fetching detailed activities")
+                    # Create progress bar for wait time
+                    format = [
+                        "{desc}: {percentage:3.0f}%|{bar}|"
+                        " {n_fmt}/{total_fmt} [{elapsed}<{remaining}]"
+                    ]
+                    for _ in tqdm(
+                        range(wait_time),
+                        desc=f"Rate limited, waiting {wait_time/60:.1f}m",
+                        unit="s",
+                        ncols=120,
+                        bar_format="".join(format)
+                    ): time.sleep(1)
                     
                     if current_retry >= max_retries:
                         print(
                             f"Max retries ({max_retries}) reached after rate"
                             " limiting. Returning partial results."
                         )
-                        adjusted_activities = activities[len(detailed_activities):]
-                        return detailed_activities + adjusted_activities
-                        
-                except Exception as e:
-                    print(f"Got exception: {str(e)}")
-                    
-                    # Check specifically for HTTP 429 error.
-                    if "429" in str(e) and "Too Many Requests" in str(e):
-                        print(
-                            "Detected 429 Too Many Requests error."
-                            " Waiting for 15 minutes..."
-                        )
-                        pbar.set_description("Rate limited, waiting 15m")
-                        time.sleep(900)
-                        pbar.set_description("Fetching detailed activities")
-                        continue
-                    
-                    adjusted_activities = activities[len(detailed_activities):]
-                    return detailed_activities + adjusted_activities           
+                    continue
+                return None
         
-        return detailed_activities
+        return detailed_activity
     
     def is_authenticated(self) -> bool:
         """
