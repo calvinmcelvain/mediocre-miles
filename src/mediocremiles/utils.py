@@ -79,7 +79,7 @@ def get_date_n_days_ago(days: int = 30) -> datetime:
 
 
 def convert_distance(
-    meters: float, unit: Literal["m", "km", "mi", "ft"]) -> float:
+    meters: float, unit: Literal["m", "km", "mi", "ft", "inch"]) -> float:
     """
     Convert meters to kilometers, miles, and feet.
     """
@@ -91,7 +91,8 @@ def convert_distance(
         "m": meters,
         "km": km,
         "mi": miles,
-        "ft": feet
+        "ft": feet,
+        "inch": feet / 12
     }
     
     return factor[unit]
@@ -112,3 +113,10 @@ def convert_speed(
     }
     
     return factor[unit]
+
+
+def c_to_f(celsius: float) -> float:
+    """
+    Converts celsius to fahrenheit.
+    """
+    return celsius * (9 / 5) + 32

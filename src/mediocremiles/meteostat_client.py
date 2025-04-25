@@ -2,11 +2,15 @@
 Contains the MeteostatClient
 """
 # built-in.
+import pandas as pd
 from typing import Dict, Optional, Any, List
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # third-party
 from meteostat import Point, Hourly
+
+# local.
+from utils import convert_distance, convert_speed, c_to_f
 
 
 
@@ -16,7 +20,36 @@ class MeteostatClient:
     A client for interacting with the Meteostat Python library to retrieve 
     hourly weather data for activity data.
     """
-    def create_point(
+    def get_hourly_conditions(
+        self, 
+        latitude: float,
+        longitude: float,
+        start_date: datetime,
+        altitude: Optional[float] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Get hourly weather conditions for a specific location and time range.
+        """
+        try:
+            # Create a Point and fetch data.
+            point = self._create_point(latitude, longitude, altitude)
+            data = Hourly(point, start_date, start_date + timedelta(days=1))
+            weather_data = data.fetch()
+            
+            if weather_data.empty:
+                print(
+                    "No weather data found for coordinates:"
+                    f"lat: {latitude}; lon: {longitude}"
+                )
+                return None
+            
+            return self._format_data(weather_data)
+            
+        except Exception as e:
+            print(f"Error retrieving hourly conditions: {str(e)}")
+            return None
+        
+    def _create_point(
         self,
         latitude: float,
         longitude: float,
@@ -28,39 +61,22 @@ class MeteostatClient:
         if altitude:
             return Point(latitude, longitude, altitude)
         return Point(latitude, longitude)
-    
-    def get_hourly_conditions(
-        self, 
-        latitude: float,
-        longitude: float,
-        start_date: datetime,
-        altitude: Optional[float] = None
-    ) -> List[Dict[str, Any]]:
+        
+    def _format_data(self, data: pd.DataFrame) -> pd.DataFrame:
         """
-        Get hourly weather conditions for a specific location and time range.
+        Adds standard columns removes missing values.
         """
-        try:            
-            # Create a Point and fetch data.
-            point = self.create_point(latitude, longitude, altitude)
-            print(point)
-            data = Hourly(loc=point, start=start_date)
-            print(data)
-            weather_data = data.fetch()
-            
-            if weather_data.empty:
-                print(
-                    "No weather data found for coordinates:"
-                    f"lat: {latitude}; lon: {longitude}"
-                )
-                return None
-            
-            return weather_data.to_dict('records')
-            
-        except Exception as e:
-            print(f"Error retrieving hourly conditions: {str(e)}")
-            return None
+        df = data[~(data["temp"].isna())]
+        df.loc[:, "conditions"] = df["coco"].apply(self._map_condition_code)
+        df.loc[:, "temp_f"] = df["temp"].apply(c_to_f)
+        df.loc[:, "dwpt_f"] = df["temp"].apply(c_to_f)
+        df.loc[:, "prcp_inch"] = df["prcp"].apply(convert_distance, unit="inch")
+        df.loc[:, "snow_inch"] = df["snow"].apply(convert_distance, unit="inch")
+        df.loc[:, "wspd_mph"] = df["wspd"].apply(convert_speed, unit="mi")
+        df.loc[:, "wpgt_mph"] = df["wpgt"].apply(convert_speed, unit="mi")
+        return df
     
-    def map_condition_code(self, code: int) -> str:
+    def _map_condition_code(self, code: int) -> str:
         """
         map Meteostat condition code.
         """
