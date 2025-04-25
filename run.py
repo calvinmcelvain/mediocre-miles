@@ -22,10 +22,11 @@ WorkoutType = Literal["run", "ride"]
 
 def fetch_activities(
     client: StravaClient, 
-    after_date: Optional[datetime] = None,
-    before_date: Optional[datetime] = None,
-    detailed: bool = False,
-    activity_type: Optional[WorkoutType] = None
+    after_date: Optional[datetime],
+    before_date: Optional[datetime],
+    detailed: bool,
+    activity_type: Optional[WorkoutType],
+    no_wait: bool
 ) -> List[ActivityModel]:
     """
     Fetch activities from Strava API after and/or before specified dates (if 
@@ -37,6 +38,8 @@ def fetch_activities(
     
     summary_activities = client.get_activities(
         after=after_date, before=before_date)
+    
+    if summary_activities is None: return None
     
     if not summary_activities:
         print("No new activities found.")
@@ -75,7 +78,8 @@ def fetch_activities(
         )
         
         for activity in pbar:
-            detailed_activity = client.get_detailed_activity(activity)
+            detailed_activity = client.get_detailed_activity(
+                activity, no_wait=no_wait)
             
             if detailed_activity: 
                 activity_model = ActivityModel.from_strava_activity(detailed_activity)
@@ -107,6 +111,8 @@ def main():
                        help='Filter activities by type (run or ride)')
     parser.add_argument('--before', type=str,
                        help='Fetch activities before this date (YYYY-MM-DD format)')
+    parser.add_argument('--no-wait', action='store_true',
+                       help='Whether or not to wait if RateException')
     args = parser.parse_args()
     
     client = StravaClient()
@@ -149,7 +155,8 @@ def main():
         after_date,
         before_date,
         args.detailed, 
-        args.type
+        args.type,
+        args.no_wait
     )
 
 

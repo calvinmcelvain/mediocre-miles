@@ -187,24 +187,17 @@ class StravaClient:
         
         # Restricted to 100 requests every 15min & 2000 daily.
         activities = None
-        retried = False
         while not activities:
             try:
                 activities = self.client.get_activities(
                     limit=limit, after=after, before=before)
-                retried = False
-            except (RateLimitTimeout, RateLimitExceeded):
-                if retried:
-                    print(
-                        "Strava API rate day limit exceeded. Try again tomorrow."
-                    )
-                    return None
-                print("Strava API rate limit exceeded. Retrying...")
-                retried = True
+            except Exception as e:
+                print(f"Got exception: {str(e)}")
+                return None
         return list(activities)
     
     def get_detailed_activity(
-        self, activity: SummaryActivity
+        self, activity: SummaryActivity, **kwargs
     ) -> List[DetailedActivity]:
         """
         Gets detailed activity data with robust rate limit handling.
@@ -227,6 +220,8 @@ class StravaClient:
                 
                 # Check specifically for HTTP 429 error.
                 if "429" in str(e) and "Too Many Requests" in str(e):
+                    if kwargs.get("no_wait", False): return None
+                    
                     print(
                         "Detected 429 Too Many Requests error."
                         " Waiting for 15 minutes..."
