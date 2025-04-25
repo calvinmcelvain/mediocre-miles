@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from meteostat import Point, Hourly
 
 # local.
-from utils import convert_distance, convert_speed, c_to_f
+from src.mediocremiles.utils import convert_distance, convert_speed, c_to_f
 
 
 
