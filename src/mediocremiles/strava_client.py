@@ -2,6 +2,7 @@
 Contains the StravaClient model.
 """
 # built-in.
+import logging
 import time
 import json
 from tqdm import tqdm
@@ -11,13 +12,16 @@ from pathlib import Path
 
 # third-party.
 from stravalib import Client
-from stravalib.exc import AccessUnauthorized, RateLimitExceeded, RateLimitTimeout
+from stravalib.exc import AccessUnauthorized
 from stravalib.model import DetailedActivity, SummaryActivity, AthleteStats
 from stravalib.strava_model import Zones
 from datetime import datetime
 
 # local.
 from src.mediocremiles.utils import load_config, load_envs
+
+
+log = logging.getLogger(__name__)
 
 
 CONFIGS = load_config()
@@ -72,8 +76,8 @@ class StravaClient:
                 )
                 self._save_token_to_file(access_token)
             except Exception as e:
-                print(f"Authorization failed: {str(e)}")
-                return None
+                log.error(f"Authorization failed: {str(e)}")
+                raise 
         
         access_token = self._load_token_from_file()
         self.client.access_token = access_token["access_token"]
@@ -135,8 +139,8 @@ class StravaClient:
             
             return token_response
         except Exception as e:
-            print(f"Error refreshing token: {str(e)}")
-            return None
+            log.error(f"Error refreshing token: {str(e)}")
+            raise
     
     def _save_token_to_file(self, token_data: dict) -> None:
         """
@@ -145,7 +149,7 @@ class StravaClient:
         with self.token_file.open("w") as f:
             json.dump(token_data, f)
         
-        print(f"Token data saved to: {self.token_file.as_posix()}")
+        log.info(f"Token data saved to: {self.token_file.as_posix()}")
         return None
     
     def _load_token_from_file(self) -> Dict[str, str]:
@@ -155,7 +159,7 @@ class StravaClient:
         if self.token_file.exists():
             with self.token_file.open() as f:
                 return json.load(f)
-        print(f"Token file loaded from: {self.token_file.as_posix()}")
+        log.info(f"Token file loaded from: {self.token_file.as_posix()}")
         return None
     
     def get_athlete_stats(self) -> AthleteStats:
@@ -192,7 +196,7 @@ class StravaClient:
                 activities = self.client.get_activities(
                     limit=limit, after=after, before=before)
             except Exception as e:
-                print(f"Got exception: {str(e)}")
+                log.exception(f"Exception in getting activities: {str(e)}")
                 return None
         return list(activities)
     
@@ -216,13 +220,11 @@ class StravaClient:
             try:
                 detailed_activity = self.client.get_activity(activity.id)
             except Exception as e:
-                print(f"Got exception: {str(e)}")
-                
-                # Check specifically for HTTP 429 error.
+                log.exception(f"Got exception: {str(e)}")
                 if "429" in str(e) and "Too Many Requests" in str(e):
                     if kwargs.get("no_wait", False): return None
                     
-                    print(
+                    log.exception(
                         "Detected 429 Too Many Requests error."
                         " Waiting for 15 minutes..."
                     )
@@ -232,7 +234,7 @@ class StravaClient:
                     # Calculate wait time with exponential backoff.
                     wait_time = 900 + base_wait_time * (2 ** (current_retry - 1))
                     
-                    print(
+                    log.info(
                         f"Rate limit exceeded ({str(e)})."
                         f" Waiting for {wait_time/60:.1f} minutes..."
                     )
@@ -251,13 +253,12 @@ class StravaClient:
                     ): time.sleep(1)
                     
                     if current_retry >= max_retries:
-                        print(
+                        log.error(
                             f"Max retries ({max_retries}) reached after rate"
                             " limiting. Returning partial results."
                         )
                     continue
                 return None
-        
         return detailed_activity
     
     def is_authenticated(self) -> bool:
@@ -270,9 +271,6 @@ class StravaClient:
         try:
             self.refresh_token()
             return True
-        except AccessUnauthorized:
-            print(f"Strava client could not be authenticated")
-            return False
         except Exception as e:
-            print(f"Authentication error: {e}")
-            return False
+            log.error(f"Authentication error: {e}")
+            raise
