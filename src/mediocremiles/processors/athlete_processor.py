@@ -3,6 +3,7 @@ Contains the AthleteProcessor model.
 """
 
 # built-in.
+import logging
 import pandas as pd
 from pathlib import Path
 from typing import Dict
@@ -12,6 +13,9 @@ from src.mediocremiles.utils import load_config
 from src.mediocremiles.strava_client import StravaClient
 from src.mediocremiles.models.athlete_stats import AthleteStatistics
 from src.mediocremiles.models.athlete_zones import AthleteZones
+
+
+log = logging.getLogger(__name__)
 
 
 CONFIGS = load_config()
@@ -33,7 +37,7 @@ class AthleteProcessor:
         try:
             zones_data = client.get_athlete_zones()
             if not zones_data:
-                print("No zones data available")
+                log.debug("No zones data available")
                 return None
             
             athlete_zones = AthleteZones.from_strava_zones(zones_data)
@@ -54,10 +58,10 @@ class AthleteProcessor:
             
             df.to_csv(self.zones_file)
             
-            print(f"Exported all zones data to: {self.zones_file.as_posix()}")
+            log.info(f"Exported all zones data to: {self.zones_file.as_posix()}")
             
         except Exception as e:
-            print(f"Error exporting athlete zones: {e}")
+            log.exception(f"Error exporting athlete zones: {e}")
             return None
     
     def export_athlete_stats(self, client: StravaClient) -> None:
@@ -67,7 +71,7 @@ class AthleteProcessor:
         try:
             strava_stats = client.get_athlete_stats()
             if not strava_stats:
-                print("Could not retrieve athlete stats")
+                log.debug("Could not retrieve athlete stats")
                 return None
             
             stats = AthleteStatistics.from_strava_stats(strava_stats)
@@ -92,8 +96,8 @@ class AthleteProcessor:
             df = pd.DataFrame.from_records(rows)
             
             df.to_csv(self.stats_file)
-            print(f"Exported athlete stats to: {self.stats_file.as_posix()}")
+            log.info(f"Exported athlete stats to: {self.stats_file.as_posix()}")
             
         except Exception as e:
-            print(f"Error exporting athlete stats: {e}")
+            log.exception(f"Error exporting athlete stats: {e}")
             return None

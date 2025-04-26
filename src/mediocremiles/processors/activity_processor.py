@@ -4,6 +4,7 @@ Contains the ActivityProcessor model.
 # built-in.
 import copy
 import pytz
+import logging
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional, Dict
@@ -16,6 +17,9 @@ from src.mediocremiles.utils import load_config, convert_distance, convert_speed
 from src.mediocremiles.models.activity import ActivityModel
 from src.mediocremiles.weather import Weather
 import src.mediocremiles.errors as exe
+
+
+log = logging.getLogger(__name__)
 
 
 CONFIGS = load_config()
@@ -40,7 +44,7 @@ class ActivityProcessor:
             df['start_date'] = pd.to_datetime(df['start_date'])
             return df['start_date'].max()
         except (FileNotFoundError, Exception):
-            print("No existing CSV found.")
+            log.debug("No existing CSV found.")
             return None
     
     @staticmethod
@@ -131,14 +135,14 @@ class ActivityProcessor:
             
             combined_df.to_csv(self.activity_data_file, index=False)
             
-            print(f"Updated CSV with {len(new_df)} activities.")
-            print(
+            log.info(f"Updated CSV with {len(new_df)} activities.")
+            log.info(
                 "All activities have been saved to:"
                 f" {self.activity_data_file.as_posix()}"
             )
             return None
         except Exception as e:
-            print(f"Error updating CSV: {e}")
+            log.exception(f"Error updating CSV: {e}")
             return exe.CSVUpdateError
 
     def update_csv_detailed_activity(self, detailed_activity: ActivityModel) -> None:
@@ -165,5 +169,5 @@ class ActivityProcessor:
             # no logs since iteration.
             return None
         except Exception as e:
-            print(f"Error updating CSV: {e}")
+            log.exception(f"Error updating CSV: {e}")
             return exe.CSVUpdateError
