@@ -14,7 +14,7 @@ import pandas as pd
 # local.
 from src.mediocremiles.utils import load_config, convert_distance, convert_speed
 from src.mediocremiles.models.activity import ActivityModel
-from src.mediocremiles.meteostat_client import MeteostatClient
+from mediocremiles.weather import Weather
 import src.mediocremiles.errors as exe
 
 
@@ -88,7 +88,7 @@ class ActivityProcessor:
             new_df = pd.DataFrame(self._dump_activities(new_activities))
             
             # Adding weather.
-            client = MeteostatClient()
+            client = Weather()
             for idx, row in new_df.iterrows():
                 lat = row["start_lat"]
                 lon = row["start_lon"]

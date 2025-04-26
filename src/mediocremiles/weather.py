@@ -1,5 +1,5 @@
 """
-Contains the MeteostatClient
+Contains the Weather model.
 """
 # built-in.
 import pandas as pd
@@ -15,7 +15,7 @@ from src.mediocremiles.utils import convert_distance, convert_speed, c_to_f
 
 
 
-class MeteostatClient:
+class Weather:
     """
     A client for interacting with the Meteostat Python library to retrieve 
     hourly weather data for activity data.
