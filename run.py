@@ -42,8 +42,6 @@ def main():
                        help='Get athlete stats')
     parser.add_argument('--before', type=str,
                        help='Fetch activities before this date (YYYY-MM-DD format)')
-    parser.add_argument('--no-wait', action='store_true',
-                       help='Whether or not to wait if RateException')
     args = parser.parse_args()
     
     client = StravaClient()
@@ -113,8 +111,7 @@ def main():
         )
         
         for activity in pbar:
-            detailed_activity = client.get_detailed_activity(
-                activity, no_wait=args.no_wait)
+            detailed_activity = client.get_detailed_activity(activity)
             
             if detailed_activity: 
                 assrt_complete_process(processor.update_activities(detailed_activity))
