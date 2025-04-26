@@ -45,19 +45,14 @@ class AthleteProcessor:
             data = athlete_zones.model_dump()
             
             dfs = []
-            zone_types = ["hear_rate", "power"]
+            zone_types = ["heart_rate", "power"]
             for zone in zone_types:
                 key = f"{zone}_zones"
                 if key in data:
                     df = pd.DataFrame.from_records(data[key])
-                    if df.empty:
-                        df = pd.DataFrame({
-                            'zone_type': zone,
-                            'fetched_at': data['fetched_at']
-                        })
-                    else:
-                        df['zone_type'] = zone
-                        df['fetched_at'] = data['fetched_at']
+                    if df.empty: continue
+                    df['zone_type'] = zone
+                    df['fetched_at'] = data['fetched_at']
                     dfs.append(df)
             
             combined_df = pd.concat(dfs)

@@ -41,7 +41,7 @@ class ActivityProcessor:
             df = pd.read_csv(self.activity_data_file)
             if df.empty or 'start_date' not in df.columns:
                 return None
-            df['start_date'] = pd.to_datetime(df['start_date'])
+            df['start_date'] = pd.to_datetime(df['start_date'], format='ISO8601')
             return df['start_date'].max()
         except (FileNotFoundError, Exception):
             log.debug("No existing CSV found.")
@@ -130,7 +130,9 @@ class ActivityProcessor:
             except FileNotFoundError:
                 combined_df = new_df
             
-            combined_df['start_date'] = pd.to_datetime(combined_df['start_date'])
+            # Modified date parsing to handle timezone-aware datetimes
+            combined_df['start_date'] = pd.to_datetime(
+                combined_df['start_date'], format='ISO8601', utc=True)
             combined_df = combined_df.sort_values('start_date', ascending=False)
             
             combined_df.to_csv(self.activity_data_file, index=False)
@@ -161,8 +163,8 @@ class ActivityProcessor:
             combined_df = pd.concat([existing_df, new_df], ignore_index=True)
             
             # Sort on date and cummulative split time.
-            combined_df['start_date'] = pd.to_datetime(combined_df['start_date'])
-            combined_df['split_cuml_time'] = pd.to_datetime(combined_df['split_cuml_time'])
+            combined_df['start_date'] = pd.to_datetime(combined_df['start_date'], format='ISO8601')
+            combined_df['split_cuml_time'] = pd.to_datetime(combined_df['split_cuml_time'], format='ISO8601')
             combined_df = combined_df.sort_values(['start_date', 'split_cuml_time'], ascending=False)
             
             combined_df.to_csv(self.activity_data_file, index=False)
