@@ -118,8 +118,11 @@ class ActivityModel(BaseModel):
         convert stravalib Activity to our model.
         """
         # adjusting timezone of start_date.
-        tz = strava_activity.timezone.split(') ')[1] if strava_activity.timezone else 'UTC'
-        strava_activity.start_date = strava_activity.start_date.astimezone(pytz.timezone(tz))
+        tz = pytz.timezone(
+            strava_activity.timezone.split(') ')[1]
+            if strava_activity.timezone else 'UTC'
+        )
+        strava_activity.start_date = strava_activity.start_date.astimezone(tz)
     
         end_lat = end_lon = None
         if getattr(strava_activity, "end_latlng"):

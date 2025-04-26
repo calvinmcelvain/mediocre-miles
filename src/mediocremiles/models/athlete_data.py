@@ -1,7 +1,7 @@
 """
 Contains the AthleteData model.
 """
-from typing import Dict
+from typing import Dict, Optional
 
 from pydantic import BaseModel
 
@@ -15,6 +15,6 @@ class AthleteData(BaseModel):
     """
     Wrapper for data models.
     """
-    activities: Dict[int, ActivityModel] = None
-    zones: AthleteZones = None
-    stats: AthleteStatistics = None
+    activities: Optional[Dict[int, ActivityModel]] = None
+    zones: Optional[AthleteZones] = None
+    stats: Optional[AthleteStatistics] = None

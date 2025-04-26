@@ -4,7 +4,7 @@ Contains the WeatherProcessor model.
 import logging
 import pandas as pd
 from typing import Dict, Optional, Any, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from meteostat import Point, Hourly
 
@@ -31,9 +31,13 @@ class WeatherProcessor:
         Get hourly weather conditions for a specific location and time range.
         """
         try:
+            # Ensure start_date is naive
+            start_date = start_date.replace(tzinfo=None)
+            
             # Create a Point and fetch data.
             point = self._create_point(latitude, longitude, altitude)
-            data = Hourly(point, start_date, start_date + timedelta(hours=2))
+            end_date = start_date + timedelta(hours=2)
+            data = Hourly(point, start_date, end_date)
             weather_data = data.fetch()
             
             if weather_data.empty:
@@ -46,17 +50,17 @@ class WeatherProcessor:
             
             if df.empty: return None
             
-            weather = df.index[0]
+            weather = df.iloc[0]
             return Weather(
-                temperature=weather["temp"],
-                dew_point=weather["dwpt"],
-                humidity=weather["rhum"],
-                pressure=weather["pres"],
-                wind_direction=weather["wdir"],
-                wind_speed=weather["wspd"],
-                snow=weather["snow"],
-                precipitation=weather["prcp"],
-                conditions=weather["conditions"]
+                temperature=None if pd.isna(weather["temp"]) else weather["temp"],
+                dew_point=None if pd.isna(weather["dwpt"]) else weather["dwpt"],
+                humidity=None if pd.isna(weather["rhum"]) else weather["rhum"], 
+                pressure=None if pd.isna(weather["pres"]) else weather["pres"],
+                wind_direction=None if pd.isna(weather["wdir"]) else weather["wdir"],
+                wind_speed=None if pd.isna(weather["wspd"]) else weather["wspd"],
+                snow=None if pd.isna(weather["snow"]) else weather["snow"],
+                precipitation=None if pd.isna(weather["prcp"]) else weather["prcp"],
+                conditions=None if pd.isna(weather["conditions"]) else weather["conditions"]
             )
         except Exception as e:
             log.exception(f"Error retrieving hourly conditions: {str(e)}")

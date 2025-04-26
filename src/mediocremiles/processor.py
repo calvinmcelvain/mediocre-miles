@@ -70,11 +70,11 @@ class DataProcessor:
                 
             try:
                 new_data = load_json_n_validate(self.activity_data_file, AthleteData)
-                new_data = new_data.activities.update(new_activity_data)
+                new_data.activities.update(new_activity_data)
             except FileNotFoundError:
                 new_data = AthleteData(activities = new_activity_data)
             
-            write_json(self.activity_data_file, new_data.model_dump())
+            write_json(self.activity_data_file, new_data.model_dump(mode="json"))
             
             log.debug(f"Updated data with activity ids: {set(new_data.activities)}")
             log.debug(f"Saved to: {self.activity_data_file.as_posix()}")
@@ -95,7 +95,7 @@ class DataProcessor:
             except FileNotFoundError:
                 new_zone_data = AthleteData(zones=new_zones)
             
-            write_json(self.activity_data_file, new_zone_data.model_dump())
+            write_json(self.activity_data_file, new_zone_data.model_dump(mode="json"))
             
             log.info(f"Zones saved to: {self.activity_data_file.as_posix()}")
             return "complete"
@@ -115,7 +115,7 @@ class DataProcessor:
             except FileNotFoundError:
                 new_stats_data = AthleteData(stats=new_stats)
             
-            write_json(self.activity_data_file, new_stats_data.model_dump())
+            write_json(self.activity_data_file, new_stats_data.model_dump(mode="json"))
             
             log.info(f"Athlete stats saved to: {self.activity_data_file.as_posix()}")
             return "complete"
