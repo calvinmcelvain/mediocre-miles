@@ -64,6 +64,7 @@ def main():
         after_date = get_date_n_days_ago(args.days)
         log.info(f"Fetching activities from the last {args.days} days...")
     
+    summary_activities = None
     if any((args.all, args.days, args.before)):
         summary_activities = client.get_activities(
             after=after_date, before=before_date)
