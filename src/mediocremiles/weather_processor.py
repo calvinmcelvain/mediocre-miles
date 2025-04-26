@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 from meteostat import Point, Hourly
 
-from mediocremiles.models.weather import Weather
+from src.mediocremiles.models.weather import Weather
 
 
 log = logging.getLogger("app.weather")

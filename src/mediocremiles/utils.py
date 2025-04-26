@@ -4,12 +4,11 @@ Useful functions.
 import logging
 import json
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
 from typing import Dict, Union, List, Any, TypeVar, Literal, Type
 from pathlib import Path
 
 import pydantic
-
-from dotenv import load_dotenv
 
 
 log = logging.getLogger("app.utils")

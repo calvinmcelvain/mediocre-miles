@@ -6,3 +6,6 @@ python-dateutil==2.9.0
 typing_extensions==4.13.2
 tqdm==4.67.1
 meteostat==1.6.8
+pytest==8.3.5
+pytest-cov==6.1.1
+dotenv==0.9.9
