@@ -3,10 +3,10 @@ Contains the ActivityModel.
 """
 import pytz
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Sequence, List
 
 from pydantic import BaseModel, computed_field
-from stravalib.model import DetailedActivity
+from stravalib.model import DetailedActivity, Split
 
 from src.mediocremiles.utils import convert_distance, convert_speed
 from src.mediocremiles.weather_processor import WeatherProcessor
@@ -147,6 +147,10 @@ class ActivityModel(BaseModel):
         cadence = getattr(strava_activity, 'average_cadence', None)
         if cadence and strava_activity.type.root not in {"Ride", "EBikeRide", "VirtualRide"}:
             cadence *= 2
+            
+        splits = getattr(strava_activity, 'splits_standard', None)
+        if splits:
+            splits = Splits.from_strava_splits(splits)
         
         return cls(
             id=strava_activity.id,
@@ -176,10 +180,79 @@ class ActivityModel(BaseModel):
             perceived_exertion=getattr(strava_activity, 'perceived_exertion', None),
             suffer_score=getattr(strava_activity, 'suffer_score', None),
             weighted_average_power=getattr(strava_activity, 'weighted_average_watts', None),
-            splits_standard=getattr(strava_activity, 'splits_standard', None),
+            splits_standard=splits,
             device_name=getattr(strava_activity, 'device_name', None),
             weather=weather
         )
+    
+    class Config:
+        orm_mode = True
+        
+        
+        
+class Splits(BaseModel):
+    average_speed: Optional[float]
+    distance: Optional[float]
+    elapsed_time: Optional[float]
+    elevation_difference: Optional[float]
+    moving_time: Optional[float]
+    pace_zone: Optional[int]
+    split: Optional[int]
+    average_heartrate: Optional[float]
+    average_grade_adjusted_speed: Optional[float]
+    
+    @computed_field
+    @property
+    def average_speed_kmh(self) -> Optional[float]:
+        if self.average_speed:
+            return convert_speed(self.average_speed, "km")
+        return None
+    
+    @computed_field
+    @property
+    def average_speed_mph(self) -> Optional[float]:
+        if self.average_speed:
+            return convert_speed(self.average_speed, "mi")
+        return None
+    
+    @computed_field
+    @property
+    def elevation_difference_ft(self) -> Optional[float]:
+        if self.elevation_difference:
+            return convert_distance(self.elevation_difference, "ft")
+        return None
+    
+    @computed_field
+    @property
+    def average_grade_adjusted_speed_kmh(self) -> Optional[float]:
+        if self.average_grade_adjusted_speed:
+            return convert_speed(self.average_grade_adjusted_speed, "km")
+        return None
+    
+    @computed_field
+    @property
+    def average_grade_adjusted_speed_mph(self) -> Optional[float]:
+        if self.average_grade_adjusted_speed:
+            return convert_speed(self.average_grade_adjusted_speed, "mi")
+        return None
+    
+    @classmethod
+    def from_strava_splits(cls, splits: Sequence[Split]) -> List['Splits']:
+        model_splits = []
+        for split in splits:
+            model_splits.append(cls(
+                average_speed=split.average_speed,
+                distance=split.distance,
+                elapsed_time=split.elapsed_time,
+                elevation_difference=split.elevation_difference,
+                moving_time=split.moving_time,
+                pace_zone=split.pace_zone,
+                split=split.split,
+                average_heartrate=split.average_heartrate,
+                average_grade_adjusted_speed=split.average_grade_adjusted_speed
+            ))
+        return model_splits
+    
     
     class Config:
         orm_mode = True
