@@ -5,7 +5,7 @@ import logging
 import time
 import json
 from os import environ
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 from pathlib import Path
 
 from stravalib import Client
@@ -14,6 +14,7 @@ from stravalib.model import DetailedActivity, SummaryActivity, AthleteStats
 from stravalib.strava_model import Zones
 from datetime import datetime
 
+from src.mediocremiles.models.activity import ActivityModel
 from src.mediocremiles.utils import load_config, load_envs
 
 
@@ -179,7 +180,7 @@ class StravaClient:
         limit: Optional[int] = None,
         after: Optional[datetime] = None,
         before: Optional[datetime] = None
-    ) -> List[SummaryActivity]:
+    ) -> List[Union[SummaryActivity, ActivityModel]]:
         """
         Get athlete activities.
         """
@@ -197,7 +198,7 @@ class StravaClient:
         return list(activities)
     
     def get_detailed_activity(
-        self, activity: SummaryActivity, **kwargs
+        self, activity: Union[SummaryActivity, ActivityModel]
     ) -> List[DetailedActivity]:
         """
         Gets detailed activity data with robust rate limit handling.

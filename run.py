@@ -1,13 +1,13 @@
 import logging
 import argparse
 from tqdm import tqdm
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from logger import LoggerManager
+from src.mediocremiles.models.athlete_data import AthleteData
 from src.mediocremiles.strava_client import StravaClient
-from src.mediocremiles.models.activity import ActivityModel
 from src.mediocremiles.processor import DataProcessor
-from src.mediocremiles.utils import get_date_n_days_ago, load_config
+from src.mediocremiles.utils import get_date_n_days_ago, load_config, load_json_n_validate
 
 
 
@@ -48,8 +48,7 @@ def main():
     
     if not client: return 
     
-    after_date = None
-    before_date = None
+    after_date = before_date = None
     
     if args.before:
         try:
@@ -64,29 +63,20 @@ def main():
     elif args.days is not None:
         after_date = get_date_n_days_ago(args.days)
         log.info(f"Fetching activities from the last {args.days} days...")
-    else:
-        latest_date = processor.get_latest_activity_date()
+    
+    if any((args.all, args.days, args.before)):
+        summary_activities = client.get_activities(
+            after=after_date, before=before_date)
+    
+        if summary_activities is None:
+            log.info("No new activities found.")
+            return 
         
-        if latest_date:
-            # avoids timezone issues.
-            after_date = latest_date - timedelta(hours=1)
-            log.info(f"Fetching activities newer than {latest_date}...")
-        else:
-            after_date = get_date_n_days_ago(30)
-            log.info("Fetching activities from the last 30 days...")
-    
-    summary_activities = client.get_activities(
-        after=after_date, before=before_date)
-    
-    if summary_activities is None:
-        log.info("No new activities found.")
-        return 
-    
-    log.info(
-        f"Fetched {len(summary_activities)} summary activities from Strava API"
-    )
-    
-    assrt_complete_process(processor.update_activities(summary_activities))
+        log.info(
+            f"Fetched {len(summary_activities)} summary activities from Strava API"
+        )
+        
+        assrt_complete_process(processor.update_activities(summary_activities))
     
     if args.athlete_stats:
         log.info("Fetching athlete stats...")
@@ -99,9 +89,15 @@ def main():
         assrt_complete_process(processor.update_zones(zones))
     
     if args.detailed:
-        log.info(
-            f"Fetching detailed data for {len(summary_activities)} activities..."
-        )
+        if summary_activities: log.info(
+            f"Fetching detailed data for {len(summary_activities)} activities...")
+        else:
+            try:
+                data = load_json_n_validate(CONFIG["paths"]["data"], AthleteData)
+                summary_activities = list(data.activities.values())
+            except Exception as e:
+                log.info("No data to get detailed data from.")
+                return
         
         pbar = tqdm(
             summary_activities,
