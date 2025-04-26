@@ -2,6 +2,7 @@
 Contains the Weather model.
 """
 # built-in.
+import logging
 import pandas as pd
 from typing import Dict, Optional, Any, List
 from datetime import datetime, timedelta
@@ -12,6 +13,8 @@ from meteostat import Point, Hourly
 # local.
 from src.mediocremiles.utils import convert_distance, convert_speed, c_to_f
 
+
+log = logging.getLogger(__name__)
 
 
 
@@ -37,7 +40,7 @@ class Weather:
             weather_data = data.fetch()
             
             if weather_data.empty:
-                print(
+                log.debug(
                     "No weather data found for coordinates:"
                     f"lat: {latitude}; lon: {longitude}"
                 )
@@ -45,7 +48,7 @@ class Weather:
             return self._format_data(weather_data)
             
         except Exception as e:
-            print(f"Error retrieving hourly conditions: {str(e)}")
+            log.exception(f"Error retrieving hourly conditions: {str(e)}")
             return pd.DataFrame()
         
     def _create_point(
