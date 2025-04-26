@@ -15,7 +15,7 @@ from src.mediocremiles.models.athlete_stats import AthleteStatistics
 from src.mediocremiles.models.athlete_zones import AthleteZones
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("app.athlete_processor")
 
 
 CONFIGS = load_config()

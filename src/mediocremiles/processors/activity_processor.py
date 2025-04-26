@@ -19,7 +19,7 @@ from src.mediocremiles.weather import Weather
 import src.mediocremiles.errors as exe
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("app.activity_processor")
 
 
 CONFIGS = load_config()

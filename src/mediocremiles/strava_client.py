@@ -12,7 +12,6 @@ from pathlib import Path
 
 # third-party.
 from stravalib import Client
-from stravalib.exc import AccessUnauthorized
 from stravalib.model import DetailedActivity, SummaryActivity, AthleteStats
 from stravalib.strava_model import Zones
 from datetime import datetime
@@ -21,7 +20,7 @@ from datetime import datetime
 from src.mediocremiles.utils import load_config, load_envs
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("app.strava_client")
 
 
 CONFIGS = load_config()

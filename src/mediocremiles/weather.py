@@ -14,7 +14,7 @@ from meteostat import Point, Hourly
 from src.mediocremiles.utils import convert_distance, convert_speed, c_to_f
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("app.weather")
 
 
 

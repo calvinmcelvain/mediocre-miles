@@ -12,7 +12,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("app.utils")
 
 
 T = TypeVar("T")
