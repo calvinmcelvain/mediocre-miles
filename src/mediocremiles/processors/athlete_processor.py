@@ -44,19 +44,25 @@ class AthleteProcessor:
             
             data = athlete_zones.model_dump()
             
-            rows = []
+            dfs = []
             zone_types = ["hear_rate", "power"]
             for zone in zone_types:
                 key = f"{zone}_zones"
                 if key in data:
-                    row = data[key]
-                    row['zone_type'] = zone
-                    row['fetched_at'] = data['fetched_at']
-                    rows.append(row)
+                    df = pd.DataFrame.from_records(data[key])
+                    if df.empty:
+                        df = pd.DataFrame({
+                            'zone_type': zone,
+                            'fetched_at': data['fetched_at']
+                        })
+                    else:
+                        df['zone_type'] = zone
+                        df['fetched_at'] = data['fetched_at']
+                    dfs.append(df)
             
-            df = pd.DataFrame.from_records(rows)
+            combined_df = pd.concat(dfs)
             
-            df.to_csv(self.zones_file)
+            combined_df.to_csv(self.zones_file, index=False)
             
             log.info(f"Exported all zones data to: {self.zones_file.as_posix()}")
             
@@ -95,7 +101,7 @@ class AthleteProcessor:
 
             df = pd.DataFrame.from_records(rows)
             
-            df.to_csv(self.stats_file)
+            df.to_csv(self.stats_file, index=False)
             log.info(f"Exported athlete stats to: {self.stats_file.as_posix()}")
             
         except Exception as e:
