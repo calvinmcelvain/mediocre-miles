@@ -5,7 +5,6 @@ Contains the LoggerManager model.
 """
 import logging
 import logging.config
-from logging.handlers import RotatingFileHandler
 from typing import Dict
 from pathlib import Path
 
@@ -29,7 +28,7 @@ class LoggerManager:
     Note: Log files are stored in './logs/'.
     """
     def __init__(self):
-        self.logs_path = Path("src").resolve().parent / "logs"
+        self.logs_path = Path().resolve() / "logs"
         self.logs_path.mkdir(exist_ok=True)
         self.log_files: Dict[str, Path] = {}
         
