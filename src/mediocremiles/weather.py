@@ -41,13 +41,12 @@ class Weather:
                     "No weather data found for coordinates:"
                     f"lat: {latitude}; lon: {longitude}"
                 )
-                return None
             
             return self._format_data(weather_data)
             
         except Exception as e:
             print(f"Error retrieving hourly conditions: {str(e)}")
-            return None
+            return pd.DataFrame()
         
     def _create_point(
         self,

@@ -95,6 +95,8 @@ class ActivityProcessor:
                 date = pd.to_datetime(row["start_date"]).replace(tzinfo=None)
                 if lat and lon:
                     weather_df = client.get_hourly_conditions(lat, lon, date)
+                    if weather_df.empty: continue
+                    
                     new_df.loc[idx, "temp_c"] = weather_df.iloc[0]["temp"]
                     new_df.loc[idx, "temp_f"] = weather_df.iloc[0]["temp_f"]
                     new_df.loc[idx, "dew_point_c"] = weather_df.iloc[0]["dwpt"]
