@@ -14,7 +14,7 @@ import pandas as pd
 # local.
 from src.mediocremiles.utils import load_config, convert_distance, convert_speed
 from src.mediocremiles.models.activity import ActivityModel
-from mediocremiles.weather import Weather
+from src.mediocremiles.weather import Weather
 import src.mediocremiles.errors as exe
 
 

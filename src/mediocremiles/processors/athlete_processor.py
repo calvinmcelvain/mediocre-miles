@@ -3,7 +3,7 @@ Contains the AthleteProcessor model.
 """
 
 # built-in.
-import json
+import pandas as pd
 from pathlib import Path
 from typing import Dict
 
@@ -38,8 +38,22 @@ class AthleteProcessor:
             
             athlete_zones = AthleteZones.from_strava_zones(zones_data)
             
-            with open(self.zones_file, 'w') as f:
-                json.dump(athlete_zones.model_dump(), f, indent=4)
+            data = athlete_zones.model_dump()
+            
+            rows = []
+            zone_types = ["hear_rate", "power"]
+            for zone in zone_types:
+                key = f"{zone}_zones"
+                if key in data:
+                    row = data[key]
+                    row['zone_type'] = zone
+                    row['fetched_at'] = data['fetched_at']
+                    rows.append(row)
+            
+            df = pd.DataFrame.from_records(rows)
+            
+            df.to_csv(self.zones_file)
+            
             print(f"Exported all zones data to: {self.zones_file.as_posix()}")
             
         except Exception as e:
@@ -58,9 +72,26 @@ class AthleteProcessor:
             
             stats = AthleteStatistics.from_strava_stats(strava_stats)
             
-            with open(self.stats_file, 'w') as f:
-                json.dump(stats.model_dump(), f, indent=4)
+            data = stats.model_dump()
+
+            activities = ['ride', 'run', 'swim']
+            periods = ['recent', 'ytd', 'all']
+
+            rows = []
+
+            for period in periods:
+                for activity in activities:
+                    key = f'{period}_{activity}_totals'
+                    if key in data:
+                        row = data[key]
+                        row['period'] = period
+                        row['activity_type'] = activity
+                        row['fetched_at'] = data['fetched_at']
+                        rows.append(row)
+
+            df = pd.DataFrame.from_records(rows)
             
+            df.to_csv(self.stats_file)
             print(f"Exported athlete stats to: {self.stats_file.as_posix()}")
             
         except Exception as e:

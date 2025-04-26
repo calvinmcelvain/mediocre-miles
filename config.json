@@ -13,8 +13,8 @@
     "env": "dotfiles/mediocre_miles.env",
     "data": {
       "activity_data": "data/strava_data.csv",
-      "athlete_stats": "data/athlete_stats.json",
-      "athlete_zones": "data/athlete_zones.json"
+      "athlete_stats": "data/athlete_stats.csv",
+      "athlete_zones": "data/athlete_zones.csv"
     },
     "token": "strava_token.json"
   }
