@@ -5,6 +5,7 @@ from typing import Optional, List, Literal
 from datetime import datetime, timedelta
 
 # local.
+from logger import LoggerManager
 import src.mediocremiles.errors as exe
 from src.mediocremiles.strava_client import StravaClient
 from src.mediocremiles.models.activity import ActivityModel
@@ -96,6 +97,9 @@ def fetch_activities(
 
 
 def main():
+    log_manager = LoggerManager()
+    log_manager.clear_logs()
+    
     parser = argparse.ArgumentParser(description='Strava Activity CSV Exporter')
     parser.add_argument('--days', type=int, default=None, 
                        help='Number of days to fetch (overrides latest activity in CSV)')
