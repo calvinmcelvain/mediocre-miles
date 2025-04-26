@@ -1,14 +1,14 @@
 """
 Useful functions.
 """
-# built-in.
 import logging
 import json
 from datetime import datetime, timedelta
-from typing import Dict, Union, List, Any, TypeVar, Literal
+from typing import Dict, Union, List, Any, TypeVar, Literal, Type
 from pathlib import Path
 
-# third-party.
+import pydantic
+
 from dotenv import load_dotenv
 
 
@@ -40,6 +40,58 @@ def load_envs(env_path: Union[str, Path]) -> None:
     return None
 
 
+def load_json(
+    file_path: Union[str, Path], dumps: bool = False
+) -> Union[str, Dict]:
+    """
+    Returns the JSON object (or string) from a JSON file.
+    """
+    try:
+        json_data = json.loads(Path(file_path).read_text())
+    except (json.JSONDecodeError, FileNotFoundError) as e:
+        log.error(f"Error loading JSON from {file_path}: {e}")
+        raise
+    return json.dumps(json_data) if dumps else json_data
+
+
+def validate_json(json_data: dict, schema: Type[T]) -> T:
+    """
+    Returns the object from json schema validation.
+    """
+    try:
+        schema_obj = schema.model_validate(json_data)
+        return schema_obj
+    except pydantic.ValidationError as e:
+        log.exception(
+            f"Validation error for schema '{schema.__name__}': {e}\n"
+            f"JSON data: {json.dumps(json_data, indent=2)}"
+        )
+    except Exception as e:
+        log.error(f"Unexpected error in validate_json: {e}")
+        raise
+
+
+def load_json_n_validate(file_path: Union[str, Path], schema: Type[T]) -> T:
+    """
+    Loads json file and validates for schema.
+    """
+    try:
+        json_data = load_json(file_path)
+        return validate_json(json_data, schema)
+    except FileNotFoundError:
+        log.error(f"File not found: {file_path}")
+        raise
+    except json.JSONDecodeError as e:
+        log.error(f"Error decoding JSON from file '{file_path}': {e}")
+        raise
+    except pydantic.ValidationError as e:
+        log.error(f"Validation error for schema '{schema.__name__}': {e}")
+        raise
+    except Exception as e:
+        log.error(f"Unexpected error in load_json_n_validate: {e}")
+        raise
+
+
 def load_config(config: str = "config.json") -> Dict[str, Any]:
     """
     Loads JSON config file.
@@ -48,14 +100,22 @@ def load_config(config: str = "config.json") -> Dict[str, Any]:
         raise ValueError("Config filename cannot be empty.")
     
     config_file = Path(config).resolve()
+    return load_json(config_file)
+
+
+def write_json(file_path: Union[str, Path], data: dict, indent: int = 4) -> None:
+    """
+    Write JSON data to a file at the given path.
+    """
     try:
-        with config_file.open("r") as file:
-            return json.load(file)
-    except FileNotFoundError:
-        log.error(f"Configuration file not found: {config}")
+        path = Path(file_path)
+        path.parent.mkdir(exist_ok=True, parents=True)
+        path.write_text(json.dumps(data, indent=indent))
+    except TypeError as e:
+        log.error(f"Error serializing JSON data: {e}")
         raise
-    except json.JSONDecodeError as e:
-        log.error(f"Error parsing JSON file '{config}': {e}")
+    except Exception as e:
+        log.error(f"Error writing JSON to file '{file_path}': {e}")
         raise
     
     

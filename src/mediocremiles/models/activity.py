@@ -1,15 +1,16 @@
 """
 Contains the ActivityModel.
 """
-
-# built-in
+import pytz
 from datetime import datetime, timedelta
 from typing import Optional
 
-# third-party.
-from src.mediocremiles.utils import convert_distance, convert_speed
-from stravalib.model import DetailedActivity
 from pydantic import BaseModel, computed_field
+from stravalib.model import DetailedActivity
+
+from src.mediocremiles.utils import convert_distance, convert_speed
+from src.mediocremiles.weather_processor import WeatherProcessor
+from src.mediocremiles.models.weather import Weather
 
 
 
@@ -43,6 +44,7 @@ class ActivityModel(BaseModel):
     weighted_average_power: Optional[float] 
     splits_standard: Optional[list]
     device_name: Optional[str]
+    weather: Optional[Weather]
     
     @computed_field
     @property
@@ -115,15 +117,22 @@ class ActivityModel(BaseModel):
         """
         convert stravalib Activity to our model.
         """
+        # adjusting timezone of start_date.
+        tz = strava_activity.timezone.split(') ')[1] if strava_activity.timezone else 'UTC'
+        strava_activity.start_date = strava_activity.start_date.astimezone(pytz.timezone(tz))
+    
         end_lat = end_lon = None
         if getattr(strava_activity, "end_latlng"):
             end_lat = strava_activity.end_latlng.lat
             end_lon = strava_activity.end_latlng.lon
         
-        start_lat = start_lon = None
+        weather_processor = WeatherProcessor()
+        start_lat = start_lon = weather =  None
         if getattr(strava_activity, "start_latlng"):
             start_lat = strava_activity.start_latlng.lat
             start_lon = strava_activity.start_latlng.lon
+            weather = weather_processor.get_hourly_conditions(
+                start_lat, start_lon, strava_activity.start_date)
             
         gear = getattr(strava_activity, 'gear', None)
         shoe = shoe_total = None
@@ -165,7 +174,8 @@ class ActivityModel(BaseModel):
             suffer_score=getattr(strava_activity, 'suffer_score', None),
             weighted_average_power=getattr(strava_activity, 'weighted_average_watts', None),
             splits_standard=getattr(strava_activity, 'splits_standard', None),
-            device_name=getattr(strava_activity, 'device_name', None)
+            device_name=getattr(strava_activity, 'device_name', None),
+            weather=weather
         )
     
     class Config:

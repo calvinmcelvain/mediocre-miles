@@ -1,11 +1,9 @@
 """
 Contains the AthleteStatistics & ActivityTotal models.
 """
-# built-in.
 from typing import Any, Optional
 from datetime import datetime
 
-# third-party.
 from src.mediocremiles.utils import convert_distance
 from stravalib.model import AthleteStats
 from pydantic import BaseModel, computed_field
@@ -60,14 +58,14 @@ class AthleteStatistics(BaseModel):
     recent_run_totals: ActivityTotal
     recent_swim_totals: ActivityTotal
     ytd_ride_totals: ActivityTotal
-    ytd_run_totals: ActivityTotal
-    ytd_swim_totals: ActivityTotal
-    all_ride_totals: ActivityTotal
-    all_run_totals: ActivityTotal
-    all_swim_totals: ActivityTotal
-    biggest_ride_distance: Optional[float]
-    biggest_climb_elevation_gain: Optional[float]
-    fetched_at: str = datetime.now().isoformat()
+    ytd_run_totals: ActivityTotal 
+    ytd_swim_totals: ActivityTotal 
+    all_ride_totals: ActivityTotal 
+    all_run_totals: ActivityTotal 
+    all_swim_totals: ActivityTotal 
+    biggest_ride_distance: Optional[float] 
+    biggest_climb_elevation_gain: Optional[float] 
+    fetched_at: str
     
     @classmethod
     def from_strava_stats(cls, strava_stats: AthleteStats) -> 'AthleteStatistics':
@@ -97,7 +95,8 @@ class AthleteStatistics(BaseModel):
             biggest_ride_distance=getattr(
                 strava_stats, 'biggest_ride_distance', 0),
             biggest_climb_elevation_gain=getattr(
-                strava_stats, 'biggest_climb_elevation_gain', 0)
+                strava_stats, 'biggest_climb_elevation_gain', 0),
+            fetched_at=datetime.now().isoformat()
         )
 
     class Config:

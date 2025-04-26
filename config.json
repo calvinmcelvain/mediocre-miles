@@ -11,11 +11,7 @@
   },
   "paths": {
     "env": "dotfiles/mediocre_miles.env",
-    "data": {
-      "activity_data": "data/strava_data.csv",
-      "athlete_stats": "data/athlete_stats.csv",
-      "athlete_zones": "data/athlete_zones.csv"
-    },
+    "data": "data/strava_data.json",
     "token": "strava_token.json"
   }
 }
