@@ -1,12 +1,9 @@
 """
 Contains the AthleteZone model.
 """
-
-# built-in.
 from typing import List, Optional
 from datetime import datetime
 
-# third-party.
 from stravalib.strava_model import Zones
 from pydantic import BaseModel
 
@@ -33,7 +30,7 @@ class PowerZone(BaseModel):
 class AthleteZones(BaseModel):
     heart_rate_zones: List[Optional[HeartRateZone]]
     power_zones: List[Optional[PowerZone]]
-    fetched_at: str = datetime.now().isoformat()
+    fetched_at: str
     
     @classmethod
     def from_strava_zones(cls, strava_zones: Zones) -> 'AthleteZones':
@@ -71,7 +68,8 @@ class AthleteZones(BaseModel):
         
         return cls(
             heart_rate_zones=hr_zones,
-            power_zones=power_zones
+            power_zones=power_zones,
+            fetched_at=datetime.now().isoformat()
         )
     
     class Config:

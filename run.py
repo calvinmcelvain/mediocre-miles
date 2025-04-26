@@ -1,16 +1,12 @@
-# built-in.
+import logging
 import argparse
 from tqdm import tqdm
-from typing import Optional, List, Literal
 from datetime import datetime, timedelta
 
-# local.
 from logger import LoggerManager
-import src.mediocremiles.errors as exe
 from src.mediocremiles.strava_client import StravaClient
 from src.mediocremiles.models.activity import ActivityModel
-from src.mediocremiles.processors.activity_processor import ActivityProcessor
-from src.mediocremiles.processors.athlete_processor import AthleteProcessor
+from src.mediocremiles.processor import DataProcessor
 from src.mediocremiles.utils import get_date_n_days_ago, load_config
 
 
@@ -18,58 +14,96 @@ from src.mediocremiles.utils import get_date_n_days_ago, load_config
 CONFIG = load_config()
 
 
-WorkoutType = Literal["run", "ride"]
+def assrt_complete_process(callback: str) -> None:
+    assert callback == "complete", (
+        f"Processing activities failed. Got: {callback}"
+    )
+    return None
 
 
-def fetch_activities(
-    client: StravaClient, 
-    after_date: Optional[datetime],
-    before_date: Optional[datetime],
-    detailed: bool,
-    activity_type: Optional[WorkoutType],
-    no_wait: bool
-) -> List[ActivityModel]:
-    """
-    Fetch activities from Strava API after and/or before specified dates (if 
-    applicable).
-    Get detailed activity data if requested.
-    Filter by activity_type if specified.
-    """
-    processor = ActivityProcessor()
+def main():
+    log_manager = LoggerManager()
+    log_manager.clear_logs()
+    
+    log = logging.getLogger("app")
+    
+    processor = DataProcessor()
+    
+    parser = argparse.ArgumentParser(description='Strava Activity CSV Exporter')
+    parser.add_argument('--days', type=int, default=None, 
+                       help='Number of days to fetch (overrides latest activity in JSON)')
+    parser.add_argument('--all', action='store_true', 
+                       help='Fetch all activities (overrides --days)')
+    parser.add_argument('--detailed', action='store_true', 
+                       help='Fetches the detailed activity data for each activity fetched.')
+    parser.add_argument('--zones', action='store_true',
+                       help='Get athlete HR and Power Zones')
+    parser.add_argument('--athlete-stats', action='store_true',
+                       help='Get athlete stats')
+    parser.add_argument('--before', type=str,
+                       help='Fetch activities before this date (YYYY-MM-DD format)')
+    parser.add_argument('--no-wait', action='store_true',
+                       help='Whether or not to wait if RateException')
+    args = parser.parse_args()
+    
+    client = StravaClient()
+    
+    if not client: return 
+    
+    after_date = None
+    before_date = None
+    
+    if args.before:
+        try:
+            before_date = datetime.strptime(args.before, '%Y-%m-%d')
+            log.info(f"Fetching activities before {before_date.isoformat()}.")
+        except ValueError:
+            log.error("Error: --before date must be in YYYY-MM-DD format")
+            return
+    
+    if args.all: 
+        log.info("Fetching all activities...")
+    elif args.days is not None:
+        after_date = get_date_n_days_ago(args.days)
+        log.info(f"Fetching activities from the last {args.days} days...")
+    else:
+        latest_date = processor.get_latest_activity_date()
+        
+        if latest_date:
+            # avoids timezone issues.
+            after_date = latest_date - timedelta(hours=1)
+            log.info(f"Fetching activities newer than {latest_date}...")
+        else:
+            after_date = get_date_n_days_ago(30)
+            log.info("Fetching activities from the last 30 days...")
     
     summary_activities = client.get_activities(
         after=after_date, before=before_date)
     
-    if summary_activities is None: return None
+    if summary_activities is None:
+        log.info("No new activities found.")
+        return 
     
-    if not summary_activities:
-        print("No new activities found.")
-        return None
+    log.info(
+        f"Fetched {len(summary_activities)} summary activities from Strava API"
+    )
     
-    print(f"Fetched {len(summary_activities)} summary activities from Strava API")
+    assrt_complete_process(processor.update_activities(summary_activities))
     
-    if activity_type:
-        print(f"Filtering activities to type: {activity_type}")
-        
-        filtered_activities = list(filter(
-            lambda a: a.type.root.lower() == activity_type.lower(),
-            summary_activities
-        ))
-        
-        print(f"Filtered to {len(filtered_activities)} {activity_type} activities")
-        summary_activities = filtered_activities
+    if args.athlete_stats:
+        log.info("Fetching athlete stats...")
+        stats = client.get_athlete_stats()
+        assrt_complete_process(processor.update_stats(stats))
     
-    if not summary_activities:
-        print(f"No {activity_type} activities found after filtering.")
-        return None
+    if args.zones:
+        log.info("Fetching athlete zones...")
+        zones = client.get_athlete_zones()
+        assrt_complete_process(processor.update_zones(zones))
     
-    activities = [ActivityModel.from_strava_activity(a) for a in summary_activities]
-    process = processor.update_new_activities_csv(activities)
-    
-    assert not isinstance(process, exe.CSVUpdateError)
-    
-    if detailed:
-        print(f"Fetching detailed data for {len(summary_activities)} activities...")
+    if args.detailed:
+        log.info(
+            f"Fetching detailed data for {len(summary_activities)} activities..."
+        )
         
         pbar = tqdm(
             summary_activities,
@@ -80,88 +114,17 @@ def fetch_activities(
         
         for activity in pbar:
             detailed_activity = client.get_detailed_activity(
-                activity, no_wait=no_wait)
+                activity, no_wait=args.no_wait)
             
             if detailed_activity: 
-                activity_model = ActivityModel.from_strava_activity(detailed_activity)
-                process = processor.update_csv_detailed_activity(activity_model)
-                assert not isinstance(process, exe.CSVUpdateError)
+                assrt_complete_process(processor.update_activities(detailed_activity))
             else:
                 last_activity_idx = summary_activities.index(activity) - 1
                 last_activity = summary_activities[last_activity_idx]
-                print(
+                log.error(
                     "Error occured. Couldn't fetch all detailed activities."
-                    f" Last detailed activity fetched: {last_activity.model_dump()}"
+                    f" Last detailed activity fetched: {last_activity.id}"
                 )
-    return None
-
-
-def main():
-    log_manager = LoggerManager()
-    log_manager.clear_logs()
-    
-    parser = argparse.ArgumentParser(description='Strava Activity CSV Exporter')
-    parser.add_argument('--days', type=int, default=None, 
-                       help='Number of days to fetch (overrides latest activity in CSV)')
-    parser.add_argument('--all', action='store_true', 
-                       help='Fetch all activities (overrides --days)')
-    parser.add_argument('--detailed', action='store_true', 
-                       help='Fetches the detailed activity data for each activity fetched.')
-    parser.add_argument('--zones', action='store_true',
-                       help='Export athlete zones to CSV')
-    parser.add_argument('--athlete-stats', action='store_true',
-                       help='Export athlete statistics to JSON')
-    parser.add_argument('--type', type=str, choices=list(WorkoutType.__args__),
-                       help='Filter activities by type (run or ride)')
-    parser.add_argument('--before', type=str,
-                       help='Fetch activities before this date (YYYY-MM-DD format)')
-    parser.add_argument('--no-wait', action='store_true',
-                       help='Whether or not to wait if RateException')
-    args = parser.parse_args()
-    
-    client = StravaClient()
-    
-    if not client: return None
-    
-    if args.zones: AthleteProcessor().export_athlete_zones(client)
-    
-    if args.athlete_stats: AthleteProcessor().export_athlete_stats(client)
-    
-    after_date = None
-    before_date = None
-    
-    if args.before:
-        try:
-            before_date = datetime.strptime(args.before, '%Y-%m-%d')
-            print(f"Fetching activities before {before_date.isoformat()}.")
-        except ValueError:
-            print("Error: --before date must be in YYYY-MM-DD format")
-            return
-    
-    if args.all: 
-        print("Fetching all activities...")
-    elif args.days is not None:
-        after_date = get_date_n_days_ago(args.days)
-        print(f"Fetching activities from the last {args.days} days...")
-    else:
-        latest_date = ActivityProcessor().get_latest_activity_date()
-        
-        if latest_date:
-            # avoids timezone issues.
-            after_date = latest_date - timedelta(hours=1)
-            print(f"Fetching activities newer than {latest_date}...")
-        else:
-            after_date = get_date_n_days_ago(30)
-            print("Fetching activities from the last 30 days...")
-    
-    fetch_activities(
-        client, 
-        after_date,
-        before_date,
-        args.detailed, 
-        args.type,
-        args.no_wait
-    )
 
 
 if __name__ == "__main__":

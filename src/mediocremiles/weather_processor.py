@@ -1,24 +1,21 @@
 """
-Contains the Weather model.
+Contains the WeatherProcessor model.
 """
-# built-in.
 import logging
 import pandas as pd
 from typing import Dict, Optional, Any, List
 from datetime import datetime, timedelta
 
-# third-party
 from meteostat import Point, Hourly
 
-# local.
-from src.mediocremiles.utils import convert_distance, convert_speed, c_to_f
+from mediocremiles.models.weather import Weather
 
 
 log = logging.getLogger("app.weather")
 
 
 
-class Weather:
+class WeatherProcessor:
     """
     A client for interacting with the Meteostat Python library to retrieve 
     hourly weather data for activity data.
@@ -36,7 +33,7 @@ class Weather:
         try:
             # Create a Point and fetch data.
             point = self._create_point(latitude, longitude, altitude)
-            data = Hourly(point, start_date, start_date + timedelta(hours=1))
+            data = Hourly(point, start_date, start_date + timedelta(hours=2))
             weather_data = data.fetch()
             
             if weather_data.empty:
@@ -45,11 +42,25 @@ class Weather:
                     f"lat: {latitude}; lon: {longitude}"
                 )
             
-            return self._format_data(weather_data)
+            df = self._format_data(weather_data)
             
+            if df.empty: return None
+            
+            weather = df.index[0]
+            return Weather(
+                temperature=weather["temp"],
+                dew_point=weather["dwpt"],
+                humidity=weather["rhum"],
+                pressure=weather["pres"],
+                wind_direction=weather["wdir"],
+                wind_speed=weather["wspd"],
+                snow=weather["snow"],
+                precipitation=weather["prcp"],
+                conditions=weather["conditions"]
+            )
         except Exception as e:
             log.exception(f"Error retrieving hourly conditions: {str(e)}")
-            return pd.DataFrame()
+            return None
         
     def _create_point(
         self,
@@ -70,13 +81,6 @@ class Weather:
         """
         df = data[~(data["temp"].isna())]
         df.loc[:, "conditions"] = df["coco"].apply(self._map_condition_code)
-        df.loc[:, "temp_f"] = df["temp"].apply(c_to_f)
-        df.loc[:, "dwpt_f"] = df["temp"].apply(c_to_f)
-        df.loc[:, "prcp_inch"] = df["prcp"].apply(convert_distance, unit="inch")
-        df.loc[:, "snow_inch"] = df["snow"].apply(convert_distance, unit="inch")
-        df.loc[:, "wspd_mph"] = df["wspd"].apply(convert_speed, unit="mi")
-        df.loc[:, "wpgt_mph"] = df["wpgt"].apply(convert_speed, unit="mi")
-        df = df.drop(["coco"], axis=1)
         return df
     
     def _map_condition_code(self, code: int) -> str:
