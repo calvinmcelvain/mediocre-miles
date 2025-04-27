@@ -4,8 +4,7 @@ options(repos=repos)
 
 required_packages <- c("shiny", "shinydashboard", "ggplot2", "dplyr", "lubridate", 
                       "jsonlite", "zoo", "here", "scales", "DT", "shinyWidgets", 
-                      "shinycssloaders")
-
+                      "shinycssloaders", "plotly")
 
 install_if_missing <- function(packages) {
   new_packages <- packages[!(packages %in% installed.packages()[,"Package"])]
@@ -36,6 +35,7 @@ tryCatch({
 
 source_files <- c(
   "src/mediocremiles/data_import.R",
+  "src/mediocremiles/plot_configs.R",
   "src/mediocremiles/analysis/training_load.R",
   "src/mediocremiles/analysis/trends.R",
   "src/mediocremiles/visualizations/activity_charts.R",
@@ -49,15 +49,6 @@ for(file in source_files) {
     message(paste("Error loading:", file, "\nError:", e$message))
   })
 }
-
-app_colors <- list(
-  primary = "#2c3e50",
-  secondary = "#3498db", 
-  success = "#2ecc71",
-  warning = "#f39c12",
-  danger = "#e74c3c",
-  info = "#9b59b6"
-)
 
 
 ui <- dashboardPage(
@@ -82,7 +73,7 @@ ui <- dashboardPage(
     dateRangeInput(
       "date_range", 
       "Filter by Date:",
-      start = Sys.Date() - 180,
+      start = min(import_activity_data()$start_date),
       end = Sys.Date(),
       max = Sys.Date()
     ),
@@ -90,16 +81,15 @@ ui <- dashboardPage(
     selectizeInput(
       "activity_type", 
       "Activity Type:", 
-      choices = c("All" = "all"),
-      multiple = T,
+      choices = c("All" = "all", unique(import_activity_data()$activity_type)),
+      multiple = F,
       selected = "all"
     ),
         
     actionButton(
       "reset_filters", 
       "Reset Filters", 
-      icon = icon("sync"),
-      style = "margin-top: 10px; width: 100%;"
+      icon = icon("sync")
     )
   ),
   
@@ -111,31 +101,24 @@ ui <- dashboardPage(
       tabItem(tabName = "dashboard",
               fluidRow(
                 valueBoxOutput("total_activities", width = 3),
-                valueBoxOutput("total_distance_km", width = 3),
                 valueBoxOutput("total_distance_miles", width = 3),
+                valueBoxOutput("total_distance_km", width = 3),
                 valueBoxOutput("total_time", width = 3)
               ),
               fluidRow(
                 box(
-                  title = "Weekly Distance Summary",
-                  status = "primary",
-                  solidHeader = T,
-                  width = 6,
+                  title = div(
+                    "Total Weekly distance (last 12 weeks)", 
+                    style = "font-family: monospace; font-weight: bold;"),
+                  width = 12,
                   plotOutput("weekly_summary_plot") %>% withSpinner()
-                ),
-                box(
-                  title = "Weekly Time Summary",
-                  status = "primary",
-                  solidHeader = T,
-                  width = 6,
-                  plotOutput("weekly_time_plot") %>% withSpinner()
                 )
               ),
               fluidRow(
                 box(
-                  title = "Recent Activities",
-                  status = "primary",
-                  solidHeader = T,
+                  title = div(
+                    "Recent Activities", 
+                    style = "font-family: monospace; font-weight: bold;"),
                   width = 12,
                   DTOutput("recent_activities_table") %>% withSpinner()
                 )
@@ -165,7 +148,6 @@ ui <- dashboardPage(
                 box(
                   title = "Activity Pace vs. Distance",
                   status = "info",
-                  solidHeader = T,
                   collapsible = T,
                   width = 6,
                   plotOutput("pace_vs_distance") %>% withSpinner()
@@ -188,7 +170,8 @@ ui <- dashboardPage(
                   status = "warning",
                   solidHeader = T,
                   width = 12,
-                  plotOutput("training_load_plot", height = "300px") %>% withSpinner()
+                  plotOutput("training_load_plot", height = "300px") %>% 
+                    withSpinner()
                 )
               ),
               fluidRow(
@@ -326,20 +309,12 @@ server <- function(input, output, session) {
     return(data)
   })
   
-  observe({
-    data <- activity_data()
-    
-    if(values$data_loaded && nrow(data) > 0 && "activity_type" %in% names(data)) {
-      activity_types <- c("All" = "all", unique(data$activity_type))
-      updateSelectizeInput(session, "activity_type", choices = activity_types, selected = "all")
-    }
-  })
-  
   observeEvent(input$reset_filters, {
+    data <- import_activity_data()
     updateDateRangeInput(
       session,
       "date_range",
-      start = Sys.Date() - 180,
+      start = min(data$start_date),
       end = Sys.Date()
     )
     updateSelectizeInput(session, "activity_type", selected = "all")
@@ -395,9 +370,9 @@ server <- function(input, output, session) {
     
     valueBox(
       count, 
-      "Total Activities",
+      "Total Strava Activities",
       icon = icon("running"),
-      color = "olive"
+      color = "orange"
     )
   })
   
@@ -439,7 +414,7 @@ server <- function(input, output, session) {
       sprintf("%.1f mi", total_miles),
       "Total Distance",
       icon = icon("road"),
-      color = "orange"
+      color = "olive"
     )
   })
   
@@ -469,11 +444,7 @@ server <- function(input, output, session) {
   })
   
   output$weekly_summary_plot <- renderPlot({
-    data <- activity_data()
-    
-    req(values$data_loaded, nrow(data) > 0)
-    
-    generate_weekly_summary_plot(data)
+    generate_weekly_summary_plot(activity_data(), theme.base, colors.wsj)
   })
   
   output$weekly_time_plot <- renderPlot({

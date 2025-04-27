@@ -5,38 +5,54 @@ library(lubridate)
 
 
 
-generate_weekly_summary_plot <- function(data) {
+generate_weekly_summary_plot <- function(data, plot_theme, plot_colors) {
   weekly_summary <- data %>%
-    mutate(week_start = floor_date(as.Date(start_date), "week")) %>%
+    mutate(week_start = floor_date(start_date, unit = "week", week_start = 1)) %>%
+    distinct(id, .keep_all = TRUE) %>%
     group_by(week_start) %>%
     summarize(
-      total_distance = sum(distance_km, na.rm = TRUE),
-      total_hours = sum(moving_time_hours, na.rm = TRUE),
+      total_distance = sum(distance_miles, na.rm = T),
+      total_hours = sum(as.numeric(moving_time_hours), na.rm = T),
       activity_count = n(),
       .groups = "drop"
     ) %>%
     arrange(week_start) %>%
     tail(12)
   
-  ggplot(weekly_summary, aes(x = week_start)) +
-    geom_bar(aes(y = total_distance, fill = "Distance"), stat = "identity", alpha = 0.7) +
-    geom_line(aes(y = total_hours * 10, color = "Time"), size = 1.5) +
-    geom_point(aes(y = total_hours * 10), color = "red", size = 3) +
+  p <- ggplot(data = weekly_summary, aes(x = week_start)) +
+    geom_smooth(
+      aes(
+        y = total_distance * 1.45, 
+        color = "Time (hours)", 
+        fill = "Time (hours)"
+      ), 
+      method = "loess", se = TRUE, size = 1, level = 0.90) +
+    geom_col(
+      aes(y = total_distance, fill = "Distance (miles)"), 
+      alpha = 0.85) +
+    geom_text(
+      aes(
+        y = total_distance,
+        label = paste0(round(total_distance, 1), " mi")
+      ),
+      vjust = -0.5,
+      size = 5,
+      color = "black",
+      family = "mono",
+      fontface = "bold") +
+    scale_fill_manual(values = c("Distance (miles)" = plot_colors[3])) +
+    scale_color_manual(values = c("Time (hours)" = plot_colors[6])) +
     scale_y_continuous(
-      name = "Distance (km)",
-      sec.axis = sec_axis(~./10, name = "Time (hours)")
-    ) +
-    scale_fill_manual(values = c("Distance" = "steelblue")) +
-    scale_color_manual(values = c("Time" = "red")) +
+      name = "Distance (miles)",
+      sec.axis = sec_axis(~./1.45)) +
+    guides(fill = "none", color = "none") +
     labs(
-      title = "Weekly Training Summary (Last 12 Weeks)",
       x = "Week Starting",
+      y = NULL,
       fill = NULL,
       color = NULL
     ) +
-    theme_minimal() +
-    theme(
-      legend.position = "bottom",
-      axis.text.x = element_text(angle = 45, hjust = 1)
-    )
+    plot_theme
+  
+  return(p)
 }
