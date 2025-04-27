@@ -91,7 +91,7 @@ def load_json_n_validate(file_path: Union[str, Path], schema: Type[T]) -> T:
         raise
 
 
-def load_config(config: str = "config.json") -> Dict[str, Any]:
+def load_config(config: str = "configs/config.json") -> Dict[str, Any]:
     """
     Loads JSON config file.
     """
