@@ -10,5 +10,5 @@ theme.base <- plot.thm <- theme_wsj(color = "white") +
         title = element_text(size = 16, face = "bold"),
         legend.position = "bottom",
         legend.title=element_text(size=12, face = "bold"), 
-        legend.text=element_text(size=11),
+        legend.text=element_text(size=11, family = "mono", face = "bold"),
         strip.text.x = element_text(size = 12, face = "bold", family = "mono"))

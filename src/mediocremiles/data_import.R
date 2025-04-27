@@ -86,16 +86,20 @@ import_activity_data <- function() {
   
   numeric_cols <- c("total_distance_meters", "total_moving_time_seconds", 
                     "total_elapsed_time_seconds", "average_speed_meters_sec",
+                    "average_speed_mph", "average_speed_kmh",
                     "max_speed_meters_sec", "average_heartrate", "max_heartrate",
                     "distance_miles", "distance_km", "average_cadence", "pr_count",
                     "kudos_count", "workout_type", "shoe_total_distance", "calories",
                     "start_lat", "start_lon", "end_lat", "end_lon", "perceived_exertion",
                     "suffer_score", "weighted_average_power", "distance", "elapsed_time",
+                    "split_average_heartrate", "split_average_speed_kmh", "split_average_speed_mph",
+                    "average_grade_adjusted_speed_kmh", "average_grade_adjusted_speed_mph",
                     "moving_time", "elevation_difference", "average_grade_adjusted_speed",
                     "weather_temperature", "weather_dew_point", "weather_humidity", 
                     "weather_pressure", "weather_wind_direction", "weather_wind_speed", 
                     "weather_precipitation", "weather_temperature_f", "weather_dew_point_f",
                     "weather_precipitation_inch", "weather_snow_inch", 
+                    "elevation_gain_feet",
                     "weather_wind_speed_kmh", "weather_wind_speed_mph")
   
   for (col in numeric_cols) {

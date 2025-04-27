@@ -33,66 +33,50 @@ generate_performance_trends_plot <- function(data) {
 }
 
 
-generate_seasonal_patterns_plot <- function(data) {
+generate_seasonal_patterns_plot <- function(data, plot_theme, plot_colors) {
   monthly_stats <- data %>%
-    mutate(month = month(start_date, label = TRUE)) %>%
+    mutate(month = month(start_date, label = T)) %>%
+    distinct(id, .keep_all = T) %>%
     group_by(month) %>%
     summarize(
-      avg_distance = mean(distance_km, na.rm = TRUE),
-      avg_time = mean(moving_time_hours, na.rm = TRUE),
-      avg_elevation = mean(total_elevation_gain_meters, na.rm = TRUE) / 100,
+      avg_distance = mean(distance_miles, na.rm = T),
+      avg_time = mean(moving_time_hours, na.rm = T),
+      avg_elevation = mean(total_distance_meters, na.rm = T),
       activity_count = n(),
       .groups = "drop"
     )
   
   ggplot(monthly_stats, aes(x = month)) +
-    geom_bar(aes(y = avg_distance, fill = "Avg Distance"), stat = "identity", alpha = 0.7) +
-    geom_line(aes(y = avg_elevation, color = "Avg Elevation/100m"), group = 1, size = 1.5) +
-    geom_point(aes(y = avg_elevation), color = "red", size = 3) +
-    scale_fill_manual(values = c("Avg Distance" = "steelblue")) +
-    scale_color_manual(values = c("Avg Elevation/100m" = "red")) +
+    geom_line(aes(y = avg_elevation, color = "Avg Elevation/100m"), group = 1, linewidth=1) +
+    geom_bar(aes(y = avg_distance * 1000, fill = "Avg Distance"), stat = "identity", alpha = 0.9) +
+    scale_fill_manual(values = c("Avg Distance" = plot_colors[4])) +
+    scale_color_manual(values = c("Avg Elevation/100m" = plot_colors[1])) +
+    scale_y_continuous(
+      name = "Avg Elevation/100m",
+      sec.axis = sec_axis(~./100, name = "Avg Distance")) +
     labs(
-      title = "Seasonal Activity Patterns",
-      x = "Month",
-      y = "Average Distance (km)",
+      x = NULL,
       fill = NULL,
-      color = NULL
-    ) +
-    theme_minimal() +
-    theme(legend.position = "bottom")
+      color = NULL) +
+    guides(color = "none") +
+    plot_theme
 }
 
 
-generate_yoy_comparison_plot <- function(data) {
-  yoy_data <- data %>%
-    mutate(
-      year = year(start_date),
-      month = month(start_date),
-      date_key = paste(month, format(start_date, "%d"), sep = "-")
-    ) %>%
-    filter(year >= year(Sys.Date()) - 3) %>% 
-    group_by(year, date_key) %>%
-    summarize(
-      daily_distance = sum(distance_km, na.rm = TRUE),
-      .groups = "drop"
-    ) %>%
-    arrange(year, date_key) %>%
-    group_by(year) %>%
-    mutate(cumulative_distance = cumsum(daily_distance)) %>%
-    ungroup()
-  
-  ggplot(yoy_data, aes(x = date_key, y = cumulative_distance, color = factor(year), group = year)) +
-    geom_line(size = 1.2) +
-    scale_color_brewer(palette = "Set1") +
-    labs(
-      title = "Year-over-Year Cumulative Distance",
-      x = "Date (Month-Day)",
-      y = "Cumulative Distance (km)",
-      color = "Year"
-    ) +
-    theme_minimal() +
-    theme(
-      legend.position = "bottom",
-      axis.text.x = element_text(angle = 90, hjust = 1, size = 8)
-    )
+generate_yoy_comparison_plot <- function(data, plot_theme) {
+  p <- ggplot(outliers_removed,
+         aes(x = average_speed_mph, y = factor(year), fill = factor(year)),
+         alpha = 0.5) +
+    geom_density_ridges(
+      aes(height = after_stat(density)),
+      stat = "density",
+      scale = 2, 
+      alpha = 0.7) +
+    scale_fill_wsj(name = "Pace (min/mile)") +
+    coord_cartesian(xlim = c(
+      quantile(data$split_average_speed_mph, 0.05, na.rm = T),
+      quantile(data$split_average_speed_mph, 0.95, na.rm = T))) +
+    labs(x = "Pace (mph)", y = "Year") +
+    plot_theme
+  return(p)
 }

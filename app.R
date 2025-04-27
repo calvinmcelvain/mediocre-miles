@@ -447,154 +447,19 @@ server <- function(input, output, session) {
     generate_weekly_summary_plot(activity_data(), theme.base, colors.wsj)
   })
   
-  output$weekly_time_plot <- renderPlot({
-    data <- activity_data()
-    
-    req(values$data_loaded, nrow(data) > 0)
-    
-    # Weekly time summary plot
-    if("id" %in% names(data) && "total_moving_time_seconds" %in% names(data)) {
-      weekly_data <- data %>%
-        group_by(id) %>%
-        slice(1) %>%  # Take first row to avoid duplicates from splits
-        mutate(week = floor_date(as.Date(start_date), "week")) %>%
-        group_by(week) %>%
-        summarize(
-          total_time = sum(total_moving_time_seconds, na.rm = T) / 3600,
-          .groups = "drop"
-        )
-      
-      ggplot(weekly_data, aes(x = week, y = total_time)) +
-        geom_bar(stat = "identity", fill = "#3498db") +
-        labs(x = "Week", y = "Time (hours)", title = "Weekly Training Time") +
-        theme_minimal() +
-        scale_x_date(date_breaks = "2 weeks", date_labels = "%b %d") +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1))
-    } else {
-      # Placeholder if data not available
-      ggplot() + 
-        annotate("text", x = 0, y = 0, label = "Time data not available") +
-        theme_void()
-    }
-  })
-  
-  # Recent activities table
   output$recent_activities_table <- renderDT({
     data <- activity_data()
-    
-    req(values$data_loaded, nrow(data) > 0)
-    
-    if("id" %in% names(data)) {
-      recent <- data %>%
-        group_by(id) %>%
-        slice(1) %>%
-        ungroup() %>%
-        arrange(desc(start_date)) %>%
-        head(10)
-      
-      cols_to_show <- intersect(
-        c("name", "activity_type", "start_date", "distance_miles", 
-          "moving_time_hours", "average_speed_mph", "average_heartrate"),
-        names(recent)
-      )
-      
-      table_data <- recent %>%
-        select(all_of(cols_to_show)) %>%
-        rename_with(~gsub("_", " ", tools::toTitleCase(.x)))
-      
-      if("Start Date" %in% names(table_data)) {
-        table_data$`Start Date` <- format(as.Date(table_data$`Start Date`), "%Y-%m-%d")
-      }
-      if("Distance Km" %in% names(table_data)) {
-        table_data$`Distance Km` <- round(table_data$`Distance Km`, 2)
-      }
-      if("Moving Time Hours" %in% names(table_data)) {
-        table_data$`Moving Time Hours` <- round(table_data$`Moving Time Hours` * 60, 0)
-        names(table_data)[names(table_data) == "Moving Time Hours"] <- "Duration (min)"
-      }
-      if("Average Speed Kmh" %in% names(table_data)) {
-        table_data$`Average Speed Kmh` <- round(table_data$`Average Speed Kmh`, 2)
-        names(table_data)[names(table_data) == "Average Speed MPH"] <- "Avg Speed"
-      }
-      if("Average Heartrate" %in% names(table_data)) {
-        table_data$`Average Heartrate` <- round(table_data$`Average Heartrate`, 0)
-        names(table_data)[names(table_data) == "Average Heartrate"] <- "Avg HR"
-      }
-      
-      datatable(
-        table_data,
-        options = list(
-          pageLength = 10,
-          dom = 't',
-          ordering = T
-        ),
-        rownames = F
-      )
-    } else {
-      datatable(
-        data.frame(Message = "Cannot display activities - check data format"),
-        options = list(dom = 't'),
-        rownames = F
-      )
-    }
+    generate_recent_activities_table(data)
   })
   
-  # Activity distribution plot
   output$activity_distribution <- renderPlot({
     data <- activity_data()
-    
-    req(values$data_loaded, nrow(data) > 0)
-    
-    # Use existing function or create a simple distribution by activity type
-    if(exists("generate_activity_distribution_plot")) {
-      generate_activity_distribution_plot(data)
-    } else if("activity_type" %in% names(data) && "id" %in% names(data)) {
-      # De-duplicate split data
-      dist_data <- data %>%
-        group_by(id) %>%
-        slice(1) %>%
-        ungroup() %>%
-        count(activity_type) %>%
-        arrange(desc(n))
-      
-      ggplot(dist_data, aes(x = reorder(activity_type, n), y = n)) +
-        geom_bar(stat = "identity", fill = "#3498db") +
-        coord_flip() +
-        labs(x = "Activity Type", y = "Count", title = "Activity Distribution") +
-        theme_minimal()
-    } else {
-      # Placeholder if data not available
-      ggplot() + 
-        annotate("text", x = 0, y = 0, label = "Activity type data not available") +
-        theme_void()
-    }
+    generate_activity_distribution_plot(data, theme.base)
   })
   
-  # Activity details plot
   output$activity_details <- renderPlot({
     data <- activity_data()
-    
-    req(values$data_loaded, nrow(data) > 0)
-    
-    if(exists("generate_activity_details_plot")) {
-      generate_activity_details_plot(data)
-    } else if("distance_km" %in% names(data) && "id" %in% names(data)) {
-      # De-duplicate split data and get distance distribution
-      detail_data <- data %>%
-        group_by(id) %>%
-        slice(1) %>%
-        ungroup()
-      
-      ggplot(detail_data, aes(x = distance_km)) +
-        geom_histogram(binwidth = 2, fill = "#3498db", color = "white") +
-        labs(x = "Distance (km)", y = "Count", title = "Activity Distance Distribution") +
-        theme_minimal()
-    } else {
-      # Placeholder if data not available
-      ggplot() + 
-        annotate("text", x = 0, y = 0, label = "Distance data not available") +
-        theme_void()
-    }
+    generate_activity_details_plot(data, theme.base)
   })
   
   # Pace vs distance plot
@@ -871,44 +736,40 @@ server <- function(input, output, session) {
     
     req(values$data_loaded, nrow(data) > 0)
     
-    if(exists("generate_performance_trends_plot")) {
-      generate_performance_trends_plot(data)
-    } else if("id" %in% names(data) && "start_date" %in% names(data)) {
       # De-duplicate split data
-      trend_data <- data %>%
-        group_by(id) %>%
-        slice(1) %>%
-        ungroup() %>%
-        mutate(date = as.Date(start_date)) %>%
-        arrange(date)
+      trend_data <- data %>% distinct(id, .keep_all = T) 
       
-      # Plot based on selected metric
-      if(input$trend_metric == "pace" && "average_speed_kmh" %in% names(trend_data)) {
-        # Convert speed to pace
-        trend_data$pace_min_km <- 60 / trend_data$average_speed_kmh
+      if(input$trend_metric == "pace") {
+        trend_data$pace_min_mile <- 60 / trend_data$average_speed_mph
+        filtered_trend_data <- trend_data %>% filter(activity_type == "Run")
         
-        ggplot(trend_data, aes(x = date, y = pace_min_km)) +
-          geom_point(aes(color = activity_type), alpha = 0.7) +
-          geom_smooth(method = "loess", color = "#3498db") +
-          labs(x = "Date", y = "Pace (min/km)", title = "Pace Over Time") +
-          theme_minimal() +
+        ggplot(filtered_trend_data, aes(x = date, y = pace_min_mile)) +
+          geom_point(aes(color = activity_type), alpha = 0.7, color = colors.wsj[6]) +
+          geom_smooth(method = "loess", color = colors.wsj[3], fill = colors.wsj[3]) +
+          labs(x = NULL, y = "Pace (min/mile)") +
+          theme.base +
           scale_y_continuous(labels = function(x) sprintf("%.1f", x)) +
           scale_x_date(date_breaks = "1 month", date_labels = "%b %Y") +
           theme(axis.text.x = element_text(angle = 45, hjust = 1))
-      } else if(input$trend_metric == "hr" && "average_heartrate" %in% names(trend_data)) {
+      } else if(input$trend_metric == "hr") {
         ggplot(trend_data, aes(x = date, y = average_heartrate)) +
           geom_point(aes(color = activity_type), alpha = 0.7) +
-          geom_smooth(method = "loess", color = "#3498db") +
-          labs(x = "Date", y = "Heart Rate (bpm)", title = "Heart Rate Over Time") +
-          theme_minimal() +
+          geom_smooth(aes(color = activity_type, fill = after_scale(color)), method = "loess") +
+          scale_color_wsj() +
+          scale_fill_wsj() +
+          labs(x = NULL, y = "Heart Rate (bpm)", color = "Activity Type", fill = "Activity Type") +
+          theme.base +
           scale_x_date(date_breaks = "1 month", date_labels = "%b %Y") +
           theme(axis.text.x = element_text(angle = 45, hjust = 1))
       } else if(input$trend_metric == "distance" && "distance_km" %in% names(trend_data)) {
-        ggplot(trend_data, aes(x = date, y = distance_km)) +
+        trend_data.2 <- trend_data %>% filter(distance_miles > 1)
+        ggplot(trend_data.2, aes(x = date, y = distance_miles)) +
           geom_point(aes(color = activity_type), alpha = 0.7) +
-          geom_smooth(method = "loess", color = "#3498db") +
-          labs(x = "Date", y = "Distance (km)", title = "Distance Over Time") +
-          theme_minimal() +
+          geom_smooth(aes(color = activity_type, fill = after_scale(color)), method = "loess") +
+          scale_color_wsj() +
+          scale_fill_wsj() +
+          labs(x = NULL, y = "Distance (miles)", color = "Activity Type", fill = "Activity Type") +
+          theme.base +
           scale_x_date(date_breaks = "1 month", date_labels = "%b %Y") +
           theme(axis.text.x = element_text(angle = 45, hjust = 1))
       } else {
@@ -917,94 +778,18 @@ server <- function(input, output, session) {
           annotate("text", x = 0, y = 0, label = "Selected metric data not available") +
           theme_void()
       }
-    } else {
-      # Placeholder if date data not available
-      ggplot() + 
-        annotate("text", x = 0, y = 0, label = "Performance trend data not available") +
-        theme_void()
-    }
   })
   
   # Seasonal patterns plot
   output$seasonal_patterns <- renderPlot({
     data <- activity_data()
-    
-    req(values$data_loaded, nrow(data) > 0)
-    
-    if(exists("generate_seasonal_patterns_plot")) {
-      generate_seasonal_patterns_plot(data)
-    } else if("id" %in% names(data) && "start_date" %in% names(data)) {
-      # De-duplicate split data
-      seasonal_data <- data %>%
-        group_by(id) %>%
-        slice(1) %>%
-        ungroup() %>%
-        mutate(
-          date = as.Date(start_date),
-          month = month(date, label = T),
-          year = year(date)
-        )
-      
-      # Monthly activity count by year
-      monthly_counts <- seasonal_data %>%
-        count(year, month) %>%
-        complete(year, month, fill = list(n = 0))
-      
-      ggplot(monthly_counts, aes(x = month, y = n, group = year, color = as.factor(year))) +
-        geom_line(size = 1) +
-        geom_point(size = 2) +
-        labs(x = "Month", y = "Activity Count", title = "Seasonal Activity Patterns", color = "Year") +
-        theme_minimal() +
-        theme(legend.position = "bottom")
-    } else {
-      # Placeholder if data not available
-      ggplot() + 
-        annotate("text", x = 0, y = 0, label = "Seasonal pattern data not available") +
-        theme_void()
-    }
+    generate_seasonal_patterns_plot(data, theme.base, colors.wsj)
   })
   
   # Year-over-year comparison plot
   output$yoy_comparison <- renderPlot({
     data <- activity_data()
-    
-    req(values$data_loaded, nrow(data) > 0)
-    
-    if(exists("generate_yoy_comparison_plot")) {
-      generate_yoy_comparison_plot(data)
-    } else if("id" %in% names(data) && "start_date" %in% names(data) && "distance_km" %in% names(data)) {
-      # De-duplicate split data
-      yoy_data <- data %>%
-        group_by(id) %>%
-        slice(1) %>%
-        ungroup() %>%
-        mutate(
-          date = as.Date(start_date),
-          month = month(date, label = T),
-          year = year(date)
-        )
-      
-      # Monthly distance by year
-      monthly_distance <- yoy_data %>%
-        group_by(year, month) %>%
-        summarize(
-          total_distance = sum(distance_km, na.rm = T),
-          .groups = "drop"
-        ) %>%
-        complete(year, month, fill = list(total_distance = 0))
-      
-      ggplot(monthly_distance, aes(x = month, y = total_distance, group = year, color = as.factor(year))) +
-        geom_line(size = 1) +
-        geom_point(size = 2) +
-        labs(x = "Month", y = "Distance (km)", title = "Year-over-Year Distance Comparison", color = "Year") +
-        theme_minimal() +
-        theme(legend.position = "bottom")
-    } else {
-      # Placeholder if data not available
-      ggplot() + 
-        annotate("text", x = 0, y = 0, label = "Year-over-year comparison data not available") +
-        theme_void()
-    }
+    generate_yoy_comparison_plot(data, theme.base)
   })
 }
 
