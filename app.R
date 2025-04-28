@@ -33,6 +33,8 @@ tryCatch({
   message("Note: Working with current directory. For best results, run from project root.")
 })
 
+data_path <- "data/strava_data.json"
+
 source_files <- c(
   "src/mediocremiles/data_import.R",
   "src/mediocremiles/plot_configs.R",
@@ -73,7 +75,7 @@ ui <- dashboardPage(
     dateRangeInput(
       "date_range", 
       "Filter by Date:",
-      start = min(import_activity_data()$start_date),
+      start = min(process_strava_data(data_path)$activities$start_date),
       end = Sys.Date(),
       max = Sys.Date()
     ),
@@ -81,7 +83,7 @@ ui <- dashboardPage(
     selectizeInput(
       "activity_type", 
       "Activity Type:", 
-      choices = c("All" = "all", unique(import_activity_data()$activity_type)),
+      choices = c("All" = "all", unique(process_strava_data(data_path)$activities$activity_type)),
       multiple = F,
       selected = "all"
     ),
@@ -245,7 +247,7 @@ ui <- dashboardPage(
                   solidHeader = T,
                   width = 12,
                   fileInput("upload_json", "Upload Strava Data (JSON):", accept = ".json"),
-                  textInput("data_path", "Data File Path:", value = "data/strava_data.json"),
+                  textInput("data_path", "Data File Path:", value = data_path),
                   actionButton("save_settings", "Save Settings", icon = icon("save")),
                   actionButton("refresh_data", "Refresh Data", icon = icon("sync"))
                 )
@@ -269,7 +271,7 @@ ui <- dashboardPage(
 
 server <- function(input, output, session) {
   values <- reactiveValues(
-    data_path = "data/strava_data.json",
+    data_path = data_path,
     data_loaded = F,
     error_message = NULL
   )
@@ -278,7 +280,7 @@ server <- function(input, output, session) {
     tryCatch({
       values$error_message <- NULL
       
-      data <- import_activity_data()
+      data <- process_strava_data(input$data_path)
       values$data_loaded <- T
       
       return(data)
@@ -293,7 +295,7 @@ server <- function(input, output, session) {
   activity_data <- reactive({
     input$refresh_data
     
-    data <- load_data()
+    data <- load_data()$activities
     
     if(values$data_loaded && nrow(data) > 0 && "start_date" %in% names(data)) {
       date_range <- input$date_range
@@ -308,9 +310,33 @@ server <- function(input, output, session) {
     
     return(data)
   })
+
+  hr_zones_data <- reactive({
+    input$refresh_data
+    
+    data <- load_data()$heart_rate_zones
+    
+    return(data)
+  })
+
+  power_zones_data <- reactive({
+    input$refresh_data
+    
+    data <- load_data()$power_zones
+    
+    return(data)
+  })
+
+  athlete_stats_data <- reactive({
+    input$refresh_data
+    
+    data <- load_data()$stats
+    
+    return(data)
+  })
   
   observeEvent(input$reset_filters, {
-    data <- import_activity_data()
+    data <- process_strava_data(input$data_path)$activities
     updateDateRangeInput(
       session,
       "date_range",
@@ -773,7 +799,6 @@ server <- function(input, output, session) {
           scale_x_date(date_breaks = "1 month", date_labels = "%b %Y") +
           theme(axis.text.x = element_text(angle = 45, hjust = 1))
       } else {
-        # Placeholder if selected metric not available
         ggplot() + 
           annotate("text", x = 0, y = 0, label = "Selected metric data not available") +
           theme_void()
