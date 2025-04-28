@@ -87,7 +87,7 @@ process_activities <- function(activities) {
     combined_df$year <- year(combined_df$start_date)
     combined_df$month <- month(combined_df$start_date)
     combined_df$week <- isoweek(combined_df$start_date)
-    combined_df$weekday <- wday(combined_df$start_date, label = TRUE)
+    combined_df$weekday <- wday(combined_df$start_date, label = T)
   }
   
   combined_df <- convert_to_numeric(combined_df)

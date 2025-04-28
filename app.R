@@ -5,6 +5,12 @@
 
 source("global.R")
 
+install_if_missing(app_config$required_packages)
+
+library(shinydashboard)
+library(shiny)
+library(shinycssloaders)
+library(DT)
 
 
 ui <- dashboardPage(
@@ -30,7 +36,7 @@ ui <- dashboardPage(
     dateRangeInput(
       "date_range", 
       "Filter by Date:",
-      start = min(process_strava_data(data_path)$activities$start_date),
+      start = min(process_strava_data(app_config$data_path)$activities$start_date),
       end = Sys.Date(),
       max = Sys.Date()
     ),
@@ -38,7 +44,7 @@ ui <- dashboardPage(
     selectizeInput(
       "activity_type", 
       "Activity Type:", 
-      choices = c("All" = "all", unique(process_strava_data(data_path)$activities$activity_type)),
+      choices = c("All" = "all", unique(process_strava_data(app_config$data_path)$activities$activity_type)),
       multiple = F,
       selected = "all"
     ),
@@ -105,7 +111,4 @@ server <- function(input, output, session) {
 }
 
 
-shinyApp(ui = ui, server = server, options = list(
-  port = app_config$port, 
-  host = app_config$host
-))
+shinyApp(ui = ui, server = server)

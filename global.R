@@ -7,7 +7,6 @@ install_if_missing <- function(packages) {
   if(length(new_packages)) install.packages(new_packages)
 }
 
-
 install_if_missing(c("jsonlite", "here"))
 
 
@@ -25,6 +24,10 @@ source_files <- c(
   "src/mediocremiles/plot_configs.R",
   "src/mediocremiles/shiny/data.R",
   "src/mediocremiles/shiny/dashboard.R",
+  "src/mediocremiles/shiny/activities.R",
+  "src/mediocremiles/shiny/training.R",
+  "src/mediocremiles/shiny/trends.R",
+  "src/mediocremiles/shiny/settings.R",
   "src/mediocremiles/analysis/training_load.R",
   "src/mediocremiles/analysis/trends.R",
   "src/mediocremiles/visualizations/activity_charts.R",
@@ -44,18 +47,13 @@ config <- tryCatch(
   { fromJSON("configs/config.json") },
   error = function(e) {
     message("Error loading config.json: ", e$message)
-    # default.
     list(
-      routes = list(host = "localhost", port = 8500),
       paths = list(data = "data/strava_data.json"))
 })
 
 
 app_config <- list(
-  host = config$routes$host,
-  port = config$routes$port,
   data_path = config$paths$data,
-  strava_credentials = config$env,
   repos = "https://cran.rstudio.com",
   required_packages = c("shiny", "shinydashboard", "ggplot2", "dplyr",
                         "lubridate", "jsonlite", "zoo", "here", "scales", "DT", 
@@ -65,7 +63,3 @@ app_config <- list(
     dashboard_width = 300
   )
 )
-
-
-options(shiny.port = app_config$port)
-options(shiny.host = app_config$host)
