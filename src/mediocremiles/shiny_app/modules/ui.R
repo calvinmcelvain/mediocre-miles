@@ -108,13 +108,17 @@ activitiesTabUI <- function() {
   tabItem(tabName = "activities",
           fluidRow(
             box(
-              title = "Activity Time Distribution",
+              title = div(
+                "Activity Time Distribution", 
+                style = "font-family: monospace; font-weight: bold;"),
               status = "info",
               width = 3,
               plotOutput("activity_distribution") %>% withSpinner()
             ),
             box(
-              title = "Monthly Time by Activity Type",
+              title = div(
+                "Monthly Time by Activity Type",
+                style = "font-family: monospace; font-weight: bold;"),
               status = "info",
               width = 9,
               plotlyOutput("activity_details") %>% withSpinner()
@@ -122,13 +126,17 @@ activitiesTabUI <- function() {
           ),
           fluidRow(
             box(
-              title = "Activity Pace vs. Distance",
+              title = div(
+                "Activity Pace vs. Distance",
+                style = "font-family: monospace; font-weight: bold;"),
               status = "info",
               width = 6,
               plotOutput("pace_vs_distance") %>% withSpinner()
             ),
             box(
-              title = "Activity Heart Rate vs. Pace",
+              title = div(
+                "Activity Heart Rate vs. Pace",
+                style = "font-family: monospace; font-weight: bold;"),
               status = "info",
               width = 6,
               plotOutput("hr_vs_pace") %>% withSpinner()
@@ -143,7 +151,9 @@ trainingTabUI <- function() {
   tabItem(tabName = "training",
           fluidRow(
             box(
-              title = "Training Load Over Time",
+              title = div(
+                "Training Load Over Time",
+                style = "font-family: monospace; font-weight: bold;"),
               status = "warning",
               width = 12,
               plotOutput("training_load_plot", height = "300px") %>% withSpinner()
@@ -151,13 +161,17 @@ trainingTabUI <- function() {
           ),
           fluidRow(
             box(
-              title = "Heart Rate Zones",
+              title = div(
+                "Heart Rate Zones",
+                style = "font-family: monospace; font-weight: bold;"),
               status = "warning",
               width = 6,
               plotOutput("hr_zones_plot") %>% withSpinner()
             ),
             box(
-              title = "Power Zones",
+              title = div(
+                "Power Zones",
+                style = "font-family: monospace; font-weight: bold;"),
               status = "warning", 
               width = 6,
               plotOutput("power_zones_plot") %>% withSpinner()
@@ -165,7 +179,9 @@ trainingTabUI <- function() {
           ),
           fluidRow(
             box(
-              title = "Weekly Training Summary",
+              title = div(
+                "Weekly Training Summary",
+                style = "font-family: monospace; font-weight: bold;"),
               status = "warning",
               width = 12,
               plotOutput("weekly_training_load") %>% withSpinner()
@@ -180,7 +196,9 @@ trendsTabUI <- function() {
   tabItem(tabName = "trends",
           fluidRow(
             box(
-              title = "Performance Trends",
+              title = div(
+                "Performance Trends",
+                style = "font-family: monospace; font-weight: bold;"),
               status = "success",
               width = 12,
               radioButtons(
@@ -196,13 +214,17 @@ trendsTabUI <- function() {
           ),
           fluidRow(
             box(
-              title = "Seasonal Patterns",
+              title = div(
+                "Seasonal Patterns",
+                style = "font-family: monospace; font-weight: bold;"),
               status = "success",
               width = 6,
               plotOutput("seasonal_patterns") %>% withSpinner()
             ),
             box(
-              title = "Year-over-Year Comparison",
+              title = div(
+                "Year-over-Year Comparison",
+                style = "font-family: monospace; font-weight: bold;"),
               status = "success",
               width = 6,
               plotOutput("yoy_comparison") %>% withSpinner()
@@ -216,7 +238,9 @@ settingsTabUI <- function() {
   tabItem(tabName = "settings",
           fluidRow(
             box(
-              title = "Data Settings",
+              title = div(
+                "Data Settings",
+                style = "font-family: monospace; font-weight: bold;"),
               status = "primary",
               solidHeader = T,
               width = 12,
@@ -228,7 +252,9 @@ settingsTabUI <- function() {
           ),
           fluidRow(
             box(
-              title = "About",
+              title = div(
+                "About",
+                style = "font-family: monospace; font-weight: bold;"),
               status = "primary",
               solidHeader = T,
               width = 12,
