@@ -1,3 +1,7 @@
+#
+# src/mediocremiles/shiny_app/visualizations/weekly_summary.R - Weekly total millage summary plot.
+#
+
 library(ggplot2)
 library(dplyr)
 library(scales)
