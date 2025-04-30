@@ -42,6 +42,7 @@ source_files <- c(
   "src/mediocremiles/shiny_app/analysis/trends.R",
   "src/mediocremiles/shiny_app/visualizations/activity_details.R",
   "src/mediocremiles/shiny_app/visualizations/activity_pace.R",
+  "src/mediocremiles/shiny_app/visualizations/activity_hr.R",
   "src/mediocremiles/shiny_app/visualizations/recent_activities.R",
   "src/mediocremiles/shiny_app/visualizations/activity_distribution.R",
   "src/mediocremiles/shiny_app/visualizations/weekly_summary.R"
