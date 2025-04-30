@@ -1,10 +1,6 @@
 #
-# src/mediocremiles/shiny_app/visualizations/activity_details - Activity details plot.
+# src/mediocremiles/shiny_app/visualizations/activity_details.R - Activity details plot.
 #
-
-library(ggplot2)
-library(dplyr)
-library(lubridate)
 
 
 
@@ -22,7 +18,7 @@ generate_activity_details_plot <- function(data, plot_theme) {
       "Month: ", month_year,
       "<br>Activity: ", activity_type,
       "<br>Total Time (hours): ", round(total_time, 2)))) +
-    labs(x = "Month", y = "Time (hours)", fill = "Activity Type") +
+    labs(x = NULL, y = NULL, fill = "Activity Type") +
     scale_fill_viridis_d(option = "viridis") +
     plot_theme +
     guides(fill = "none") +

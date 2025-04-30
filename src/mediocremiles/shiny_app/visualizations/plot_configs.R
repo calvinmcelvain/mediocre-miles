@@ -3,6 +3,7 @@ library(ggthemes)
 
 
 colors.wsj <- wsj_pal()(6)
+colors.vir <- viridis_pal()(25)
 
 theme.base <- plot.thm <- theme_minimal() +
   theme(axis.title.x = element_text(size = 12, face = "bold"),

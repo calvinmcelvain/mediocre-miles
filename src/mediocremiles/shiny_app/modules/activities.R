@@ -16,30 +16,8 @@ activities_module <- function(input, output, session, activity_data) {
   })
   
   output$pace_vs_distance <- renderPlot({
-    data <- activity_data()
-    
-    req(nrow(data) > 0)
-    
-    if ("average_speed_kmh" %in% names(data) && 
-        "distance_km" %in% names(data) && 
-        "id" %in% names(data)) {
-      pace_data <- data %>%
-        group_by(id) %>%
-        slice(1) %>%
-        ungroup() %>%
-        mutate(pace_min_km = 60 / average_speed_kmh)
-      
-      ggplot(pace_data, aes(x = distance_km, y = pace_min_km)) +
-        geom_point(aes(color = activity_type), alpha = 0.7) +
-        geom_smooth(method = "loess", se = T, color = "#3498db") +
-        labs(x = "Distance (km)", y = "Pace (min/km)", title = "Pace vs. Distance") +
-        theme_minimal() +
-        scale_y_continuous(labels = function(x) sprintf("%.1f", x))
-    } else {
-      ggplot() + 
-        annotate("text", x = 0, y = 0, label = "Speed data not available") +
-        theme_void()
-    }
+    req(nrow(activity_data()) > 0)
+    generate_activity_pace_plot(activity_data(), theme.base, colors.vir)
   })
   
   output$hr_vs_pace <- renderPlot({
