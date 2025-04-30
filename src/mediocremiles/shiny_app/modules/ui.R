@@ -11,7 +11,7 @@ appUI <- function() {
       titleWidth = 300
     ),
     dashboardSidebar(
-      width = 300,
+      width = 200,
       sidebarMenuUI(),
       dateFilterUI(),
       activityTypeFilterUI(),
