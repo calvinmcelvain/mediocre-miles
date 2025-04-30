@@ -4,13 +4,14 @@
 # 
 
 source("global.R")
-source("modules/ui_components.R")
-source("modules/data_manager.R")
-source("modules/dashboard_module.R")
-source("modules/activities_module.R")
-source("modules/training_module.R")
-source("modules/trends_module.R")
-source("modules/settings_module.R")
+source("src/mediocremiles/shiny_app/server.R")
+source("src/mediocremiles/shiny_app/modules/ui.R")
+source("src/mediocremiles/shiny_app/modules/data_manager.R")
+source("src/mediocremiles/shiny_app/modules/dashboard.R")
+source("src/mediocremiles/shiny_app/modules/activities.R")
+source("src/mediocremiles/shiny_app/modules/training.R")
+source("src/mediocremiles/shiny_app/modules/trends.R")
+source("src/mediocremiles/shiny_app/modules/settings.R")
 
 
 shinyApp(ui = appUI, server = appServer)

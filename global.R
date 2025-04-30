@@ -36,12 +36,12 @@ DEFAULT_DATA_PATH <- "data/strava_data.json"
 
 
 source_files <- c(
-  "src/mediocremiles/data_import.R",
-  "src/mediocremiles/plot_configs.R",
-  "src/mediocremiles/analysis/training_load.R",
-  "src/mediocremiles/analysis/trends.R",
-  "src/mediocremiles/visualizations/activity_charts.R",
-  "src/mediocremiles/visualizations/weekly_summary.R"
+  "src/mediocremiles/shiny_app/data_import.R",
+  "src/mediocremiles/shiny_app/visualizations/plot_configs.R",
+  "src/mediocremiles/shiny_app/analysis/training_load.R",
+  "src/mediocremiles/shiny_app/analysis/trends.R",
+  "src/mediocremiles/shiny_app/visualizations/activity_charts.R",
+  "src/mediocremiles/shiny_app/visualizations/weekly_summary.R"
 )
 
 for(file in source_files) {
