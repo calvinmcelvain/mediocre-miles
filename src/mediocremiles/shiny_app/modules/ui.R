@@ -110,16 +110,12 @@ activitiesTabUI <- function() {
             box(
               title = "Activity Distribution",
               status = "info",
-              solidHeader = T,
-              collapsible = T,
               width = 6,
               plotOutput("activity_distribution") %>% withSpinner()
             ),
             box(
               title = "Activity Details",
               status = "info",
-              solidHeader = T,
-              collapsible = T,
               width = 6,
               plotOutput("activity_details") %>% withSpinner()
             )
@@ -128,15 +124,12 @@ activitiesTabUI <- function() {
             box(
               title = "Activity Pace vs. Distance",
               status = "info",
-              collapsible = T,
               width = 6,
               plotOutput("pace_vs_distance") %>% withSpinner()
             ),
             box(
               title = "Activity Heart Rate vs. Pace",
               status = "info",
-              solidHeader = T,
-              collapsible = T,
               width = 6,
               plotOutput("hr_vs_pace") %>% withSpinner()
             )
@@ -152,7 +145,6 @@ trainingTabUI <- function() {
             box(
               title = "Training Load Over Time",
               status = "warning",
-              solidHeader = T,
               width = 12,
               plotOutput("training_load_plot", height = "300px") %>% withSpinner()
             )
@@ -161,14 +153,12 @@ trainingTabUI <- function() {
             box(
               title = "Heart Rate Zones",
               status = "warning",
-              solidHeader = T,
               width = 6,
               plotOutput("hr_zones_plot") %>% withSpinner()
             ),
             box(
               title = "Power Zones",
               status = "warning", 
-              solidHeader = T,
               width = 6,
               plotOutput("power_zones_plot") %>% withSpinner()
             )
@@ -177,7 +167,6 @@ trainingTabUI <- function() {
             box(
               title = "Weekly Training Summary",
               status = "warning",
-              solidHeader = T,
               width = 12,
               plotOutput("weekly_training_load") %>% withSpinner()
             )
@@ -193,7 +182,6 @@ trendsTabUI <- function() {
             box(
               title = "Performance Trends",
               status = "success",
-              solidHeader = T,
               width = 12,
               radioButtons(
                 "trend_metric", "Metric:",
@@ -210,14 +198,12 @@ trendsTabUI <- function() {
             box(
               title = "Seasonal Patterns",
               status = "success",
-              solidHeader = T,
               width = 6,
               plotOutput("seasonal_patterns") %>% withSpinner()
             ),
             box(
               title = "Year-over-Year Comparison",
               status = "success",
-              solidHeader = T,
               width = 6,
               plotOutput("yoy_comparison") %>% withSpinner()
             )
