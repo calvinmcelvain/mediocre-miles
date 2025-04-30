@@ -108,15 +108,15 @@ activitiesTabUI <- function() {
   tabItem(tabName = "activities",
           fluidRow(
             box(
-              title = "Activity Distribution",
+              title = "Activity Time Distribution",
               status = "info",
-              width = 6,
+              width = 3,
               plotOutput("activity_distribution") %>% withSpinner()
             ),
             box(
               title = "Activity Details",
               status = "info",
-              width = 6,
+              width = 9,
               plotOutput("activity_details") %>% withSpinner()
             )
           ),
