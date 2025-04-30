@@ -3,25 +3,12 @@
 #
 
 
-
-# Package setup.
-repos <- "https://cran.rstudio.com"
-options(repos = repos)
+options(repos = "https://cran.rstudio.com")
 
 required_packages <- c(
-  "shiny", 
-  "shinydashboard", 
-  "ggplot2", 
-  "dplyr", 
-  "lubridate", 
-  "jsonlite", 
-  "zoo", 
-  "here", 
-  "scales", 
-  "DT", 
-  "shinyWidgets", 
-  "shinycssloaders", 
-  "plotly"
+  "shiny", "shinydashboard", "ggplot2", "dplyr", "lubridate", 
+  "jsonlite", "zoo", "here", "scales", "DT", "shinyWidgets", 
+  "shinycssloaders", "plotly"
 )
 
 
@@ -30,73 +17,37 @@ install_if_missing <- function(packages) {
   if(length(new_packages)) install.packages(new_packages)
 }
 
+
 install_if_missing(required_packages)
-
-
-library(shiny)
-library(shinydashboard)
-library(shinyWidgets)
-library(shinycssloaders)
-library(ggplot2)
-library(dplyr)
-library(lubridate)
-library(here)
-library(DT)
-library(scales)
+invisible(lapply(required_packages, library, character.only = T))
 
 
 
-
-
-# Directory setup.
 tryCatch({
   setwd(here())
 }, error = function(e) {
   message("Note: Working with current directory. For best results, run from project root.")
 })
 
-options(strava_data_path = "data/strava_data.json")
+
+# Default data path
+DEFAULT_DATA_PATH <- "data/strava_data.json"
 
 
-# Source file setup.
-source_files <- list(
-  data = c(
-    "src/mediocremiles/shiny_app/data_import.R",
-    "src/mediocremiles/shiny_app/data_processing.R"
-  ),
-  utils = c(
-    "src/mediocremiles/shiny_app/helpers.R",
-    "src/mediocremiles/shiny_app/onstants.R",
-    "src/mediocremiles/shiny_app/themes.R"
-  ),
-  visualizations = c(
-    "src/mediocremiles/shiny_app/visualizations/activity_charts.R",
-    "src/mediocremiles/shiny_app/visualizations/training_charts.R",
-    "src/mediocremiles/shiny_app/visualizations/trend_charts.R"
-  ),
-  ui_modules = c(
-    "src/mediocremiles/shiny_app/modules/sidebar_module.R",
-    "src/mediocremiles/shiny_app/modules/filter_modules.R",
-    "src/mediocremiles/shiny_app/modules/dashboard_module.R",
-    "src/mediocremiles/shiny_app/modules/activities_module.R",
-    "src/mediocremiles/shiny_app/modules/training_module.R",
-    "src/mediocremiles/shiny_app/modules/trends_module.R",
-    "src/mediocremiles/shiny_app/modules/settings_module.R"
-  )
+
+source_files <- c(
+  "src/mediocremiles/data_import.R",
+  "src/mediocremiles/plot_configs.R",
+  "src/mediocremiles/analysis/training_load.R",
+  "src/mediocremiles/analysis/trends.R",
+  "src/mediocremiles/visualizations/activity_charts.R",
+  "src/mediocremiles/visualizations/weekly_summary.R"
 )
 
-source_file_safely <- function(file_path) {
+for(file in source_files) {
   tryCatch({
-    source(file_path)
+    source(file)
   }, error = function(e) {
-    message(paste("Error loading:", file_path, "\nError:", e$message))
+    message(paste("Error loading:", file, "\nError:", e$message))
   })
-}
-
-
-for (category in names(source_files)) {
-  message(paste("Loading", category, "files..."))
-  for (file in source_files[[category]]) {
-    source_file_safely(file)
-  }
 }
