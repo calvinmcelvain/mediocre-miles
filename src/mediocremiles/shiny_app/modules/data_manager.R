@@ -64,7 +64,6 @@ DataManager <- function() {
     return(c("All" = "all"))
   }
   
-  # Get earliest date in dataset
   get_earliest_date <- function() {
     if (!data_env$loaded || is.null(data_env$raw_data)) {
       return(Sys.Date() - 365)
@@ -72,13 +71,12 @@ DataManager <- function() {
     
     data <- data_env$raw_data$activities
     if (nrow(data) > 0 && "start_date" %in% names(data)) {
-      return(min(as.Date(data$start_date), na.rm = TRUE))
+      return(min(as.Date(data$start_date), na.rm = T))
     }
     
     return(Sys.Date() - 365)
   }
   
-  # Get heart rate zones data
   get_hr_zones <- function() {
     if (!data_env$loaded || is.null(data_env$raw_data)) {
       return(data.frame())

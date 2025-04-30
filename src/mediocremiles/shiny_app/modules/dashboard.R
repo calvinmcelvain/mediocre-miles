@@ -89,13 +89,17 @@ dashboard_module <- function(input, output, session, activity_data) {
       color = "purple")
   })
   
-  output$weekly_summary_plot <- renderPlot({
-    req(nrow(activity_data()) > 0)
-    generate_weekly_summary_plot(activity_data(), theme.base, colors.wsj)
+  output$weekly_summary_plot <- renderPlotly({
+    data <- activity_data()
+    req(nrow(data) > 0)
+    suppressWarnings({
+      generate_weekly_summary_plot(data, theme.base, colors.wsj)
+    })
   })
   
   output$recent_activities_table <- renderDT({
-    req(nrow(activity_data()) > 0)
-    generate_recent_activities_table(activity_data())
+    data <- activity_data()
+    req(nrow(data) > 0)
+    generate_recent_activities_table(data)
   })
 }

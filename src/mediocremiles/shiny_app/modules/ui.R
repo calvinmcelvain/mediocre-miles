@@ -84,10 +84,10 @@ dashboardTabUI <- function() {
           fluidRow(
             box(
               title = div(
-                "Total Weekly distance (last 12 weeks)", 
+                "Total Weekly Distance", 
                 style = "font-family: monospace; font-weight: bold;"),
               width = 12,
-              plotOutput("weekly_summary_plot") %>% withSpinner()
+              plotlyOutput("weekly_summary_plot") %>% withSpinner()
             )
           ),
           fluidRow(
