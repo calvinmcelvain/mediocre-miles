@@ -1,23 +1,11 @@
+#
+# src/mediocremiles/shiny_app/visualizations/activity_details - Activity details plot.
+#
+
 library(ggplot2)
 library(dplyr)
 library(lubridate)
 
-
-
-generate_activity_distribution_plot <- function(data, plot_theme) {
-  activity_counts <- data %>%
-    count(activity_type) %>%
-    arrange(desc(n))
-  
-  p <- ggplot(activity_counts, aes(x = "", y = n, fill = activity_type)) +
-    geom_bar(stat = "identity", width = 1) +
-    coord_polar("y", start = 0) +
-    scale_fill_wsj() +
-    labs(fill = "Activity Type") +
-    plot_theme
-  
-  return(p)
-}
 
 
 generate_activity_details_plot <- function(data, plot_theme) {
