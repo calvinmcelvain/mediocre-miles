@@ -17,14 +17,22 @@ generate_activity_details_plot <- function(data, plot_theme) {
               .groups = "drop") %>%
     arrange(month_year)
   
-  p <- ggplot(monthly_time, aes(x = month_year, y = total_time, fill = activity_type)) +
-    geom_bar(stat = "identity") +
-    labs(title = "Monthly Time by Activity Type",
-         x = "Month",
-         y = "Time (hours)",
-         fill = "Activity Type") +
+  pp <- ggplot(monthly_time, aes(x = month_year, y = total_time, fill = activity_type)) +
+    geom_bar(stat = "identity", aes(text = paste0(
+      "Month: ", month_year,
+      "<br>Activity: ", activity_type,
+      "<br>Total Time (hours): ", round(total_time, 2)))) +
+    labs(x = "Month", y = "Time (hours)", fill = "Activity Type") +
+    scale_fill_viridis_d(option = "viridis") +
     plot_theme +
+    guides(fill = "none") +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+  p <- ggplotly(pp, tooltip = "text") %>%
+    layout(hovermode = "closest") %>%
+    layout(hoverlabel = list(bgcolor = "white")) %>%
+    layout(xaxis = list(fixedrange = T), yaxis = list(fixedrange = T)) %>%
+    config(displayModeBar = F)
   
   return(p)
 }

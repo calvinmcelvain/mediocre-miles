@@ -10,7 +10,7 @@ activities_module <- function(input, output, session, activity_data) {
     generate_activity_distribution_plot(activity_data(), theme.base)
   })
   
-  output$activity_details <- renderPlot({
+  output$activity_details <- renderPlotly({
     req(nrow(activity_data()) > 0)
     generate_activity_details_plot(activity_data(), theme.base)
   })

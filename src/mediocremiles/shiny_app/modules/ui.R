@@ -114,10 +114,10 @@ activitiesTabUI <- function() {
               plotOutput("activity_distribution") %>% withSpinner()
             ),
             box(
-              title = "Activity Details",
+              title = "Monthly Time by Activity Type",
               status = "info",
               width = 9,
-              plotOutput("activity_details") %>% withSpinner()
+              plotlyOutput("activity_details") %>% withSpinner()
             )
           ),
           fluidRow(
