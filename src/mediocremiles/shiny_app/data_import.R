@@ -1,98 +1,119 @@
+#
+# src/mediocremiles/data_import.R - Imports & processes data
+#
+
 library(jsonlite)
 library(dplyr)
 library(tidyr)
 library(lubridate)
 
 
-
 process_strava_data <- function(data_path) {
-  raw_data <- fromJSON(data_path)
-
-  # process.
-  activities_df <- process_activities(raw_data$activities)
-  hr_zones_df <- process_heart_rate_zones(raw_data$zones$heart_rate_zones)
-  power_zones_df <- process_power_zones(raw_data$zones$power_zones)
-  stats_df <- process_athlete_stats(raw_data$stats)
-
-  # list of dfs.
-  return(list(
-    activities = activities_df,
-    heart_rate_zones = hr_zones_df,
-    power_zones = power_zones_df,
-    stats = stats_df
-  ))
+  if (!file.exists(data_path)) {
+    stop("Data file not found: ", data_path)
+  }
+  
+  tryCatch({
+    raw_data <- fromJSON(data_path)
+    
+    activities_df <- process_activities(raw_data$activities)
+    hr_zones_df <- process_zones(raw_data$zones$heart_rate_zones)
+    power_zones_df <- process_zones(raw_data$zones$power_zones)
+    stats_df <- process_athlete_stats(raw_data$stats)
+    
+    return(list(
+      activities = activities_df,
+      heart_rate_zones = hr_zones_df,
+      power_zones = power_zones_df,
+      stats = stats_df
+    ))
+  }, error = function(e) {
+    stop("Error processing Strava data: ", e$message)
+  })
 }
+
 
 
 process_activities <- function(activities) {
   if (length(activities) == 0) return(data.frame())
-
+  
   activities_list <- list()
-
+  splits_list <- list()
+  
   for (activity_id in names(activities)) {
     activity <- activities[[activity_id]]
-
+    
     if (!is.list(activity)) next
-
+    
     activity_data <- activity[!sapply(activity, is.list)]
     activity_df <- as.data.frame(t(unlist(activity_data)), stringsAsFactors = F)
     
-    if (!is.null(activity$weather) && is.list(activity$weather) && !all(sapply(activity$weather, is.null))) {
-      weather_data <- lapply(activity$weather, function(x) {
-        if (is.null(x)) return(NA)
-        else return(x)
-      })
-      
-      weather_df <- data.frame(
-        temperature = weather_data$temperature,
-        dew_point = weather_data$dew_point,
-        humidity = weather_data$humidity,
-        pressure = weather_data$pressure,
-        wind_direction = weather_data$wind_direction,
-        wind_speed = weather_data$wind_speed,
-        snow = weather_data$snow,
-        precipitation = weather_data$precipitation,
-        conditions = weather_data$conditions,
-        temperature_f = weather_data$temperature_f,
-        dew_point_f = weather_data$dew_point_f,
-        precipitation_inch = weather_data$precipitation_inch,
-        snow_inch = weather_data$snow_inch,
-        wind_speed_kmh = weather_data$wind_speed_kmh,
-        wind_speed_mph = weather_data$wind_speed_mph,
-        stringsAsFactors = F
-      )
-      
-      # Add weather data to activity dataframe
+    if (has_weather_data(activity)) {
+      weather_df <- extract_weather_data(activity$weather)
       activity_df <- cbind(activity_df, weather_df)
     }
     
-    if (!is.null(activity$splits_standard) && length(activity$splits_standard) > 0) {
+    if (has_splits_data(activity)) {
       splits_df <- process_splits(activity$splits_standard, activity$id)
-      activities_list[[paste0(activity_id, "_splits")]] <- splits_df
+      splits_list[[paste0(activity_id, "_splits")]] <- splits_df
     }
     
     activities_list[[activity_id]] <- activity_df
   }
   
-  if (length(activities_list) > 0) {
-    combined_df <- bind_rows(activities_list, .id = "activity_list_id")
-  } else {
-    return(data.frame())
-  }
+  if (length(activities_list) == 0) return(data.frame())
   
-  # Convert date columns
-  if ("start_date" %in% names(combined_df)) {
-    combined_df$start_date <- as.POSIXct(combined_df$start_date, format="%Y-%m-%dT%H:%M:%S", tz = "UTC")
-    combined_df$date <- as.Date(combined_df$start_date)
-    combined_df$year <- year(combined_df$start_date)
-    combined_df$month <- month(combined_df$start_date)
-    combined_df$week <- isoweek(combined_df$start_date)
-    combined_df$weekday <- wday(combined_df$start_date, label = TRUE)
-  }
+  combined_df <- bind_rows(activities_list, .id = "activity_list_id")
   
-  combined_df <- convert_to_numeric(combined_df)
+  combined_df <- process_date_columns(combined_df)
+  
+  combined_df <- convert_numeric_columns(combined_df)
   
   return(combined_df)
+}
+
+
+has_weather_data <- function(activity) {
+  !is.null(activity$weather) && 
+    is.list(activity$weather) && 
+    !all(sapply(activity$weather, is.null))
+}
+
+
+has_splits_data <- function(activity) {
+  !is.null(activity$splits_standard) && 
+    length(activity$splits_standard) > 0
+}
+
+
+extract_weather_data <- function(weather_data) {
+  weather_fields <- c(
+    "temperature", "dew_point", "humidity", "pressure", "wind_direction", 
+    "wind_speed", "snow", "precipitation", "conditions", "temperature_f", 
+    "dew_point_f", "precipitation_inch", "snow_inch", "wind_speed_kmh", 
+    "wind_speed_mph"
+  )
+  
+  weather_values <- lapply(weather_fields, function(field) {
+    if (is.null(weather_data[[field]])) NA else weather_data[[field]]
+  })
+  
+  names(weather_values) <- weather_fields
+  return(as.data.frame(weather_values, stringsAsFactors = FALSE))
+}
+
+
+process_date_columns <- function(df) {
+  if (!"start_date" %in% names(df)) return(df)
+  
+  df$start_date <- as.POSIXct(df$start_date, format="%Y-%m-%dT%H:%M:%S", tz = "UTC")
+  df$date <- as.Date(df$start_date)
+  df$year <- year(df$start_date)
+  df$month <- month(df$start_date)
+  df$week <- isoweek(df$start_date)
+  df$weekday <- wday(df$start_date, label = TRUE)
+  
+  return(df)
 }
 
 
@@ -100,85 +121,55 @@ process_splits <- function(splits, activity_id) {
   if (length(splits) == 0) return(data.frame())
   
   splits_df <- bind_rows(lapply(splits, function(split) {
-    as.data.frame(t(unlist(split)), stringsAsFactors = F)
+    as.data.frame(t(unlist(split)), stringsAsFactors = FALSE)
   }))
   
-  splits_df$activity_id <- activity_id
-  
+
   colnames(splits_df) <- paste0("split_", colnames(splits_df))
   splits_df$split_activity_id <- activity_id
   
-  splits_df <- convert_to_numeric(splits_df)
+
+  splits_df <- convert_numeric_columns(splits_df)
   
   return(splits_df)
 }
 
 
-process_heart_rate_zones <- function(zones) {
+process_zones <- function(zones) {
   if (length(zones) == 0) return(data.frame())
   
   zones_df <- bind_rows(lapply(zones, function(zone) {
-    as.data.frame(t(unlist(zone)), stringsAsFactors = F)
+    as.data.frame(t(unlist(zone)), stringsAsFactors = FALSE)
   }))
   
-  # Convert to numeric
-  zones_df <- convert_to_numeric(zones_df)
-  
-  return(zones_df)
-}
 
-
-process_power_zones <- function(zones) {
-  if (length(zones) == 0) return(data.frame())
-  
-  zones_df <- bind_rows(lapply(zones, function(zone) {
-    as.data.frame(t(unlist(zone)), stringsAsFactors = F)
-  }))
-  
-  zones_df <- convert_to_numeric(zones_df)
+  zones_df <- convert_numeric_columns(zones_df)
   
   return(zones_df)
 }
 
 
 process_athlete_stats <- function(stats) {
-  if (length(stats) == 0) return(list())
+  if (length(stats) == 0) return(data.frame())
   
+
   stat_categories <- c(
     "recent_ride_totals", "recent_run_totals", "recent_swim_totals",
     "ytd_ride_totals", "ytd_run_totals", "ytd_swim_totals",
     "all_ride_totals", "all_run_totals", "all_swim_totals"
   )
   
-  stats_list <- list()
+
+  stats_list <- process_stat_categories(stats, stat_categories)
   
-  for (category in stat_categories) {
-    if (!is.null(stats[[category]])) {
-      category_df <- as.data.frame(stats[[category]], stringsAsFactors = F)
-      category_df$stat_category <- category
-      stats_list[[category]] <- category_df
-    }
-  }
+
+  individual_stats <- c("biggest_ride_distance", "biggest_climb_elevation_gain")
+  stats_list <- c(stats_list, process_individual_stats(stats, individual_stats))
   
-  if (!is.null(stats$biggest_ride_distance)) {
-    stats_list$biggest_ride_distance <- data.frame(
-      value = stats$biggest_ride_distance,
-      stat_name = "biggest_ride_distance",
-      stringsAsFactors = F
-    )
-  }
-  
-  if (!is.null(stats$biggest_climb_elevation_gain)) {
-    stats_list$biggest_climb_elevation_gain <- data.frame(
-      value = stats$biggest_climb_elevation_gain,
-      stat_name = "biggest_climb_elevation_gain",
-      stringsAsFactors = F
-    )
-  }
-  
+
   if (length(stats_list) > 0) {
     combined_stats <- bind_rows(stats_list, .id = "stat_id")
-    combined_stats <- convert_to_numeric(combined_stats)
+    combined_stats <- convert_numeric_columns(combined_stats)
     return(combined_stats)
   } else {
     return(data.frame())
@@ -186,14 +177,44 @@ process_athlete_stats <- function(stats) {
 }
 
 
-convert_to_numeric <- function(df) {
-  possible_numeric <- sapply(df, function(x) {
-    all(is.na(x) | grepl("^-?\\d*\\.?\\d*$", x))
-  })
+process_stat_categories <- function(stats, categories) {
+  stats_list <- list()
   
-  for (col in names(df)[possible_numeric]) {
+  for (category in categories) {
+    if (!is.null(stats[[category]])) {
+      category_df <- as.data.frame(stats[[category]], stringsAsFactors = F)
+      category_df$stat_category <- category
+      stats_list[[category]] <- category_df
+    }
+  }
+  
+  return(stats_list)
+}
+
+
+process_individual_stats <- function(stats, stat_names) {
+  stats_list <- list()
+  
+  for (stat_name in stat_names) {
+    if (!is.null(stats[[stat_name]])) {
+      stats_list[[stat_name]] <- data.frame(
+        value = stats[[stat_name]],
+        stat_name = stat_name,
+        stringsAsFactors = F
+      )
+    }
+  }
+  
+  return(stats_list)
+}
+
+
+convert_numeric_columns <- function(df) {
+  for (col in names(df)) {
     if (is.character(df[[col]])) {
-      df[[col]] <- as.numeric(df[[col]])
+      if (all(is.na(df[[col]]) | grepl("^-?\\d*\\.?\\d*$", df[[col]]))) {
+        df[[col]] <- as.numeric(df[[col]])
+      }
     }
   }
   
