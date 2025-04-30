@@ -5,8 +5,6 @@
 
 
 trendsModuleUI <- function(id) {
-  ns <- NS(id)
-  
   tabItem(tabName = "trends",
           fluidRow(
             box(

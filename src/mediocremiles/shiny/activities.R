@@ -5,8 +5,6 @@
 
 
 activitiesModuleUI <- function(id) {
-  ns <- NS(id)
-  
   tabItem(tabName = "activities",
           fluidRow(
             box(

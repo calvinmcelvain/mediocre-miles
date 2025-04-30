@@ -36,7 +36,7 @@ ui <- dashboardPage(
     dateRangeInput(
       "date_range", 
       "Filter by Date:",
-      start = min(process_strava_data(app_config$data_path)$activities$start_date),
+      start = min(process_strava_data(app_config$data_path)$activities()$start_date),
       end = Sys.Date(),
       max = Sys.Date()
     ),
@@ -44,7 +44,7 @@ ui <- dashboardPage(
     selectizeInput(
       "activity_type", 
       "Activity Type:", 
-      choices = c("All" = "all", unique(process_strava_data(app_config$data_path)$activities$activity_type)),
+      choices = c("All" = "all", unique(process_strava_data(app_config$data_path)$activities()$activity_type)),
       multiple = F,
       selected = "all"
     ),
@@ -93,13 +93,13 @@ server <- function(input, output, session) {
   
   dashboardModule("dashboard", data$activity_data, theme.base, colors.wsj)
   activitiesModule("activities", data$activity_data, theme.base)
-  trainingModule("training", data$activity_data, data$hr_zones_data, data$power_zones_data, theme.base)
+  trainingModule("training", data$activity_data, theme.base, colors.wsj)
   trendsModule("trends", data$activity_data, theme.base, colors.wsj)
   settingsModule("settings", app_config$data_path, data$refresh_trigger)
   
   
   observeEvent(input$reset_filters, {
-    data <- process_strava_data(input$data_path)$activities
+    data <- data$activity_data()
     updateDateRangeInput(
       session,
       "date_range",

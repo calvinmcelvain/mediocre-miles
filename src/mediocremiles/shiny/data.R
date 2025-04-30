@@ -15,7 +15,7 @@ dataModule <- function(id, data_path) {
       tryCatch({
         values$error_message <- NULL
         
-        data <- process_strava_data(input$data_path)
+        data <- process_strava_data(data_path)
         values$data_loaded <- T
         
         return(data)
@@ -36,7 +36,7 @@ dataModule <- function(id, data_path) {
         date_range <- input$date_range
         
         data <- data %>%
-          filter(as.Date(start_date) >= date_range[1] & as.Date(start_date) <= date_range[2])
+          filter(as.Date(start_date) >= date_range[1] && as.Date(start_date) <= date_range[2])
         
         if(!is.null(input$activity_type) && !("all" %in% input$activity_type)) {
           data <- data %>% filter(activity_type %in% input$activity_type)

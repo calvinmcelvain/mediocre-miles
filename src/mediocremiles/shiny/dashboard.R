@@ -40,15 +40,7 @@ dashboardModule <- function(id, activity_data, theme.base, colors.wsj) {
     output$total_activities <- renderValueBox({
       data <- activity_data()
       
-      if(values$data_loaded && nrow(data) > 0) {t
-        if("id" %in% names(data)) {
-          count <- length(unique(data$id))
-        } else {
-          count <- nrow(data)
-        }
-      } else {
-        count <- 0
-      }
+      count <- length(unique(data$id))
       
       valueBox(
         count, 
@@ -61,15 +53,11 @@ dashboardModule <- function(id, activity_data, theme.base, colors.wsj) {
     output$total_distance_km <- renderValueBox({
       data <- activity_data()
       
-      if(values$data_loaded && nrow(data) > 0) {
-        total_km <- data %>% 
-          group_by(id) %>% 
-          summarize(distance = first(distance_km)) %>% 
-          pull(distance) %>% 
-          sum(na.rm = T)
-      } else {
-        total_km <- 0
-      }
+      total_km <- data %>% 
+        group_by(id) %>% 
+        summarize(distance = first(distance_km)) %>% 
+        pull(distance) %>% 
+        sum(na.rm = T)
       
       valueBox(
         sprintf("%.1f km", total_km),
@@ -82,16 +70,12 @@ dashboardModule <- function(id, activity_data, theme.base, colors.wsj) {
     output$total_distance_miles <- renderValueBox({
       data <- activity_data()
       
-      if(values$data_loaded && nrow(data) > 0) {
-        total_miles <- data %>% 
-          group_by(id) %>% 
-          summarize(distance = first(distance_miles)) %>% 
-          pull(distance) %>% 
-          sum(na.rm = T)
-      } else {
-        total_miles <- 0
-      }
-      
+      total_miles <- data %>% 
+        group_by(id) %>% 
+        summarize(distance = first(distance_miles)) %>% 
+        pull(distance) %>% 
+        sum(na.rm = T)
+
       valueBox(
         sprintf("%.1f mi", total_miles),
         "Total Distance",
@@ -103,19 +87,15 @@ dashboardModule <- function(id, activity_data, theme.base, colors.wsj) {
     output$total_time <- renderValueBox({
       data <- activity_data()
       
-      if(values$data_loaded && nrow(data) > 0) {
-        total_seconds <- data %>% 
-          group_by(id) %>% 
-          summarize(time = first(total_moving_time_seconds)) %>% 
-          pull(time) %>% 
-          sum(na.rm = T)
-        
-        hours <- floor(total_seconds / 3600)
-        minutes <- floor((total_seconds - hours * 3600) / 60)
-        time_str <- sprintf("%d:%02d", hours, minutes)
-      } else {
-        time_str <- "0:00"
-      }
+      total_seconds <- data %>% 
+        group_by(id) %>% 
+        summarize(time = first(total_moving_time_seconds)) %>% 
+        pull(time) %>% 
+        sum(na.rm = T)
+      
+      hours <- floor(total_seconds / 3600)
+      minutes <- floor((total_seconds - hours * 3600) / 60)
+      time_str <- sprintf("%d:%02d", hours, minutes)
       
       valueBox(
         time_str,
@@ -126,7 +106,8 @@ dashboardModule <- function(id, activity_data, theme.base, colors.wsj) {
     })
     
     output$weekly_summary_plot <- renderPlot({
-      generate_weekly_summary_plot(activity_data(), theme.base, colors.wsj)
+      data <- activity_data()
+      generate_weekly_summary_plot(data, theme.base, colors.wsj)
     })
     
     output$recent_activities_table <- renderDT({
