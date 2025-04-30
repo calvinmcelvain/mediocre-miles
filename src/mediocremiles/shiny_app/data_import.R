@@ -1,5 +1,5 @@
 #
-# src/mediocremiles/data_import.R - Imports & processes data
+# src/mediocremiles/shiny_app/data_import.R - Imports & processes data
 #
 
 library(jsonlite)
