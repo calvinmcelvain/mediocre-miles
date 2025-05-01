@@ -4,14 +4,25 @@
 # 
 
 source("global.R")
-source("src/mediocremiles/shiny_app/server.R")
-source("src/mediocremiles/shiny_app/modules/ui.R")
-source("src/mediocremiles/shiny_app/modules/data_manager.R")
-source("src/mediocremiles/shiny_app/modules/dashboard.R")
-source("src/mediocremiles/shiny_app/modules/activities.R")
-source("src/mediocremiles/shiny_app/modules/training.R")
-source("src/mediocremiles/shiny_app/modules/trends.R")
-source("src/mediocremiles/shiny_app/modules/settings.R")
+source("ui.R")
+source("server.R")
 
+source("modules/data_manager.R")
+
+source("modules/recent_activity/overview.R")
+source("modules/recent_activity/details.R")
+source("modules/recent_activity/training_load.R")
+
+source("modules/performance/overview.R")
+source("modules/performance/trends.R")
+source("modules/performance/yearly.R")
+
+source("modules/gear/overview.R")
+source("modules/gear/comparison.R")
+
+source("modules/weather/overview.R")
+source("modules/weather/impact.R")
+
+source("modules/settings.R")
 
 shinyApp(ui = appUI, server = appServer)
