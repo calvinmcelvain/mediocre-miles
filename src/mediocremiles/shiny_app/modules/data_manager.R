@@ -2,8 +2,6 @@
 # src/mediocremiles/shiny_app/modules/data_manager.R - Loads & filters data.
 #
 
-
-
 DataManager <- function() {
   data_env <- new.env(parent = emptyenv())
   
@@ -30,24 +28,62 @@ DataManager <- function() {
     })
   }
   
-  filter_activities <- function(date_range, activity_type) {
+  filter_activities <- function(date_range, activity_type, gear = NULL, weather_condition = NULL) {
     if (!data_env$loaded || is.null(data_env$raw_data)) {
       return(data.frame())
     }
     
     data <- data_env$raw_data$activities
     
-    if (nrow(data) > 0 && "start_date" %in% names(data)) {
-      data <- data %>%
-        filter(as.Date(start_date) >= date_range[1] & 
-                 as.Date(start_date) <= date_range[2])
+    if (nrow(data) > 0) {
+      if (!is.null(date_range) && length(date_range) == 2) {
+        data <- data %>%
+          filter(as.Date(start_date) >= date_range[1] & 
+                   as.Date(start_date) <= date_range[2])
+      }
       
       if (!is.null(activity_type) && !("all" %in% activity_type)) {
         data <- data %>% filter(activity_type %in% activity_type)
       }
+      
+      if (!is.null(gear) && "shoes" %in% names(data)) {
+        data <- data %>% filter(shoes %in% gear)
+      }
+      
+      if (!is.null(weather_condition) && "conditions" %in% names(data)) {
+        data <- data %>% filter(conditions %in% weather_condition)
+      }
     }
     
     return(data)
+  }
+  
+  get_gear_options <- function() {
+    if (!data_env$loaded || is.null(data_env$raw_data)) {
+      return(c("None" = "none"))
+    }
+    
+    data <- data_env$raw_data$activities
+    if (nrow(data) > 0 && "shoes" %in% names(data)) {
+      gear <- c("All" = "all", unique(data$shoes[!is.na(data$shoes)]))
+      return(gear)
+    }
+    
+    return(c("All" = "all"))
+  }
+  
+  get_weather_conditions <- function() {
+    if (!data_env$loaded || is.null(data_env$raw_data)) {
+      return(c("None" = "none"))
+    }
+    
+    data <- data_env$raw_data$activities
+    if (nrow(data) > 0 && "conditions" %in% names(data)) {
+      conditions <- c("All" = "all", unique(data$conditions[!is.na(data$conditions)]))
+      return(conditions)
+    }
+    
+    return(c("All" = "all"))
   }
   
   get_activity_types <- function() {
@@ -57,7 +93,7 @@ DataManager <- function() {
     
     data <- data_env$raw_data$activities
     if (nrow(data) > 0 && "activity_type" %in% names(data)) {
-      types <- c("All" = "all", unique(data$activity_type))
+      types <- c("All" = "all", unique(data$activity_type[!is.na(data$activity_type)]))
       return(types)
     }
     
@@ -81,7 +117,6 @@ DataManager <- function() {
     if (!data_env$loaded || is.null(data_env$raw_data)) {
       return(data.frame())
     }
-    
     return(data_env$raw_data$heart_rate_zones)
   }
   
@@ -89,7 +124,6 @@ DataManager <- function() {
     if (!data_env$loaded || is.null(data_env$raw_data)) {
       return(data.frame())
     }
-    
     return(data_env$raw_data$power_zones)
   }
   
@@ -97,7 +131,6 @@ DataManager <- function() {
     if (!data_env$loaded || is.null(data_env$raw_data)) {
       return(data.frame())
     }
-    
     return(data_env$raw_data$stats)
   }
   
@@ -121,6 +154,8 @@ DataManager <- function() {
     load_data = load_data,
     filter_activities = filter_activities,
     get_activity_types = get_activity_types,
+    get_gear_options = get_gear_options,
+    get_weather_conditions = get_weather_conditions,
     get_earliest_date = get_earliest_date,
     get_hr_zones = get_hr_zones,
     get_power_zones = get_power_zones,
