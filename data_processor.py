@@ -13,7 +13,7 @@ from src.mediocremiles.models.activity import ActivityModel
 from src.mediocremiles.models.athlete_zones import AthleteZones
 from src.mediocremiles.models.athlete_stats import AthleteStatistics
 from src.mediocremiles.models.athlete_data import AthleteData
-from src.mediocremiles.utils import load_config, load_json_n_validate, write_json, to_list
+from utils import load_config, load_json_n_validate, write_json, to_list
 
 
 log = logging.getLogger("app.activity_processor")

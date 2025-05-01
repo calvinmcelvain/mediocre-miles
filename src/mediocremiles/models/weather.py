@@ -5,7 +5,7 @@ from typing import Optional
 
 from pydantic import BaseModel, computed_field
 
-from src.mediocremiles.utils import convert_distance, convert_speed, c_to_f
+from utils import convert_distance, convert_speed, c_to_f
 
 
 
