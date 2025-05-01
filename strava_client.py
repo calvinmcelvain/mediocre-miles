@@ -45,7 +45,7 @@ class StravaClient:
         
         self.token_file = Path(PATHS.get("token")).resolve()
         
-        self.client = Client(rate_limiter=DefaultRateLimiter("medium"))
+        self.client = Client(rate_limiter=DefaultRateLimiter("high"))
         self._initiate_and_authorize()
     
     def _initiate_and_authorize(self) -> Optional[Client]:
