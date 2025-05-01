@@ -8,8 +8,8 @@ from typing import Optional, Sequence, List
 from pydantic import BaseModel, computed_field
 from stravalib.model import DetailedActivity, Split
 
-from src.mediocremiles.utils import convert_distance, convert_speed
-from src.mediocremiles.weather_processor import WeatherProcessor
+from utils import convert_distance, convert_speed
+from weather_processor import WeatherProcessor
 from src.mediocremiles.models.weather import Weather
 
 

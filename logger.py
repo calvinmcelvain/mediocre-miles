@@ -8,7 +8,7 @@ import logging.config
 from typing import Dict
 from pathlib import Path
 
-from src.mediocremiles.utils import load_config
+from utils import load_config
 
 
 LOGGER_CONFIGS = load_config("configs/logger.json")

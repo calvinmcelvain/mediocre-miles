@@ -36,7 +36,7 @@ DEFAULT_DATA_PATH <- "data/strava_data.json"
 
 
 source_files <- c(
-  "src/mediocremiles/shiny_app/data_import.R",
+  "src/mediocremiles/shiny_app/utils/data_import.R",
   "src/mediocremiles/shiny_app/visualizations/plot_configs.R",
   "src/mediocremiles/shiny_app/analysis/training_load.R",
   "src/mediocremiles/shiny_app/analysis/trends.R",
