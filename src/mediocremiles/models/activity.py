@@ -191,47 +191,47 @@ class ActivityModel(BaseModel):
         
         
 class Splits(BaseModel):
-    average_speed: Optional[float]
-    distance: Optional[float]
-    elapsed_time: Optional[float]
-    elevation_difference: Optional[float]
-    moving_time: Optional[float]
-    pace_zone: Optional[int]
+    split_average_speed: Optional[float]
+    split_distance: Optional[float]
+    split_elapsed_time: Optional[float]
+    split_elevation_difference: Optional[float]
+    split_moving_time: Optional[float]
+    split_pace_zone: Optional[int]
     split: Optional[int]
-    average_heartrate: Optional[float]
-    average_grade_adjusted_speed: Optional[float]
+    split_average_heartrate: Optional[float]
+    split_average_grade_adjusted_speed: Optional[float]
     
     @computed_field
     @property
-    def average_speed_kmh(self) -> Optional[float]:
+    def split_average_speed_kmh(self) -> Optional[float]:
         if self.average_speed:
             return convert_speed(self.average_speed, "km")
         return None
     
     @computed_field
     @property
-    def average_speed_mph(self) -> Optional[float]:
+    def split_average_speed_mph(self) -> Optional[float]:
         if self.average_speed:
             return convert_speed(self.average_speed, "mi")
         return None
     
     @computed_field
     @property
-    def elevation_difference_ft(self) -> Optional[float]:
+    def split_elevation_difference_ft(self) -> Optional[float]:
         if self.elevation_difference:
             return convert_distance(self.elevation_difference, "ft")
         return None
     
     @computed_field
     @property
-    def average_grade_adjusted_speed_kmh(self) -> Optional[float]:
+    def split_average_grade_adjusted_speed_kmh(self) -> Optional[float]:
         if self.average_grade_adjusted_speed:
             return convert_speed(self.average_grade_adjusted_speed, "km")
         return None
     
     @computed_field
     @property
-    def average_grade_adjusted_speed_mph(self) -> Optional[float]:
+    def split_average_grade_adjusted_speed_mph(self) -> Optional[float]:
         if self.average_grade_adjusted_speed:
             return convert_speed(self.average_grade_adjusted_speed, "mi")
         return None
@@ -241,15 +241,15 @@ class Splits(BaseModel):
         model_splits = []
         for split in splits:
             model_splits.append(cls(
-                average_speed=split.average_speed,
-                distance=split.distance,
-                elapsed_time=split.elapsed_time,
-                elevation_difference=split.elevation_difference,
-                moving_time=split.moving_time,
-                pace_zone=split.pace_zone,
+                split_average_speed=split.average_speed,
+                split_distance=split.distance,
+                split_elapsed_time=split.elapsed_time,
+                split_elevation_difference=split.elevation_difference,
+                split_moving_time=split.moving_time,
+                split_pace_zone=split.pace_zone,
                 split=split.split,
-                average_heartrate=split.average_heartrate,
-                average_grade_adjusted_speed=split.average_grade_adjusted_speed
+                split_average_heartrate=split.average_heartrate,
+                split_average_grade_adjusted_speed=split.average_grade_adjusted_speed
             ))
         return model_splits
     
