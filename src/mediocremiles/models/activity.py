@@ -204,36 +204,36 @@ class Splits(BaseModel):
     @computed_field
     @property
     def split_average_speed_kmh(self) -> Optional[float]:
-        if self.average_speed:
-            return convert_speed(self.average_speed, "km")
+        if self.split_average_speed:
+            return convert_speed(self.split_average_speed, "km")
         return None
     
     @computed_field
     @property
     def split_average_speed_mph(self) -> Optional[float]:
-        if self.average_speed:
-            return convert_speed(self.average_speed, "mi")
+        if self.split_average_speed:
+            return convert_speed(self.split_average_speed, "mi")
         return None
     
     @computed_field
     @property
     def split_elevation_difference_ft(self) -> Optional[float]:
-        if self.elevation_difference:
-            return convert_distance(self.elevation_difference, "ft")
+        if self.split_elevation_difference:
+            return convert_distance(self.split_elevation_difference, "ft")
         return None
     
     @computed_field
     @property
     def split_average_grade_adjusted_speed_kmh(self) -> Optional[float]:
-        if self.average_grade_adjusted_speed:
-            return convert_speed(self.average_grade_adjusted_speed, "km")
+        if self.split_average_grade_adjusted_speed:
+            return convert_speed(self.split_average_grade_adjusted_speed, "km")
         return None
     
     @computed_field
     @property
     def split_average_grade_adjusted_speed_mph(self) -> Optional[float]:
-        if self.average_grade_adjusted_speed:
-            return convert_speed(self.average_grade_adjusted_speed, "mi")
+        if self.split_average_grade_adjusted_speed:
+            return convert_speed(self.split_average_grade_adjusted_speed, "mi")
         return None
     
     @classmethod
