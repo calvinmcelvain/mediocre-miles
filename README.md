@@ -124,6 +124,7 @@ All visualization and modeling components were developed and evaluated as part o
 - **Data Export:** Supports CSV and JSON formats.
 - **Interactive Visualizations:** Generates plots and dashboards for pace trends, heart rate zones, power zones, and other performance Metrics.
 - **Shiny Dashboard:** Provides an accessible web interface for exploring your running data.
+- **Weather Data Integration:** Retrieves weather conditions for each activity using the [Meteostat Python library](https://github.com/meteostat/meteostat-python?tab=readme-ov-file) by matching the activity’s start date, time, and location.
 
 ---
 
