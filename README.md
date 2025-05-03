@@ -1,8 +1,8 @@
 # MediocreMiles
 
-**MediocreMiles** is a Python-based application using [Strava's API](https://developers.strava.com/) designed to analyze and visualize individual running data. The goal is to provide accessible insights and predictive analysis for personal running performance—without requiring professional-level athleticism or expertise.
+**MediocreMiles** is a Python-based application that uses the [Strava API](https://developers.strava.com/) to retrieve, analyze, and visualize personal running data. Developed as a final project for **STAT 4580: Data Visualization** (Spring 2025), it provides accessible insights and exploratory visualizations for recreational runners without requiring advanced analytical tools.
 
-For inquiries, please contact **Calvin McElvain** at [mcelvain@hotmail.com](mailto:mcelvain@hotmail.com).
+For questions, please contact **Calvin McElvain** at [mcelvain@hotmail.com](mailto:mcelvain@hotmail.com).
 
 ---
 
@@ -10,117 +10,129 @@ For inquiries, please contact **Calvin McElvain** at [mcelvain@hotmail.com](mail
 
 ### Prerequisites
 
-- Python 3.8+
-- A Strava account
-- Strava API credentials (Client ID & Secret)
-  - See [Strava's getting started guide](https://developers.strava.com/docs/getting-started/).
+- Python 3.8 or higher
+- R (for the Shiny dashboard)
+- A Strava account and API credentials (Client ID and Client Secret)
+  - See [Strava's Getting Started Guide](https://developers.strava.com/docs/getting-started/)
 
 ### Installation
 
-1. Clone the repository
-    
-```bash
-git clone https://github.com/your-username/mediocre-miles.git
-cd mediocre-miles
-```
+1. **Clone the repository:**
 
-2. Create virtual environment
+    ```bash
+    git clone https://github.com/your-username/mediocre-miles.git
+    cd mediocre-miles
+    ```
 
-_Python env_:
+2. **Set up a Python virtual environment:**
 
-```bash
-python -m venv <environment_name>
-source <environment_name>/bin/activate
-```
+    _Using the built-in venv:_
 
-_Andaconda env_:
+    ```bash
+    python -m venv <environment_name>
+    source <environment_name>/bin/activate
+    ```
 
-```bash
-conda create -n <environment_name> python=12.7.0
-conda activate <environment_name>
-```
+    _Or with Anaconda:_
 
-3. Install dependencies
+    ```bash
+    conda create -n <environment_name> python=3.8
+    conda activate <environment_name>
+    ```
 
-```bash
-pip install -r requirements.txt
-```
+3. **Install required Python dependencies:**
 
-3. Create a `.env` file, adding variables:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-```
-STRAVA_CLIENT_ID=your_client_id
-STRAVA_CLIENT_SECRET=your_client_secret
-```
+4. **Configure API Credentials:**
 
-4. Edit `configs.json` file for `.env` path.
+    Create a `.env` file (e.g., in the project root) with the following contents:
 
-### Usage
+    ```
+    STRAVA_CLIENT_ID=your_client_id
+    STRAVA_CLIENT_SECRET=your_client_secret
+    ```
 
-Run the main script to fetch your Strava activities:
+5. **Update Configuration Paths:**
 
-```bash
-python run.py --days 30  # Fetch last 30 days of activities
-python run.py --all     # Fetch all activities
-```
-
-#### Command Options
-
-| Command               | Description                                                      |
-|-----------------------|------------------------------------------------------------------|
-| `--days <number>`     | Fetch activities from the last `<number>` days.                  |
-| `--all`               | Fetch all activities.                                            |
-| `--detailed`          | Fetch detailed activity data for each activity.                  |
-| `--zones`             | Export athlete zones to a CSV file.                              |
-| `--athlete-stats`     | Export athlete statistics to a JSON file.                        |
-| `--type <type>`       | Filter activities by `type` (only support for `run` or `ride`).  |
+    Ensure the configuration file ([configs/config.json](configs/config.json)) points to the correct locations for your environment (including the relative path to your `.env` file).
 
 ---
 
-## :chart_with_upwards_trend: Purpose
+## :gear: Usage
 
-MediocreMiles aims to help users:
+### Python Data Processing
 
-- Understand their running habits and performance trends through visualizations.
-- Identify patterns over time (e.g., pace improvements, training frequency).
-- Generate basic predictive analytics based on historical data (e.g., forecasted pace, distance progression).
+Fetch and process your Strava activity data using the main Python script. You can run the script with a variety of command-line options:
+
+```bash
+python run.py --days 30       # Fetch activities from the last 30 days
+python run.py --all           # Fetch all available activities
+python run.py --detailed      # Fetch detailed activity-level data after initial retrieval
+python run.py --zones         # Export athlete heart rate/power zones
+python run.py --athlete-stats # Export athlete summary statistics
+```
+
+Optionally, you can also specify a date before which activities should be fetched:
+
+```bash
+python run.py --before 2025-04-01  # Fetch activities before April 1, 2025
+```
+
+### R Shiny Dashboard
+
+A Shiny dashboard is provided for interactive visualizations of your Strava activity data.
+
+1. **Install R Packages**  
+   Ensure the required R packages (e.g., shiny, shinydashboard, ggplot2, plotly, etc.) are installed. The dashboard uses packages installed from CRAN, so running the app from the project root (where the `global.R` file is located) will automatically install any missing packages.
+
+2. **Launch the Dashboard:**
+
+    In R or RStudio, set the working directory to the project root and run:
+
+    ```r
+    source("global.R")
+    shinyApp(ui = appUI, server = appServer)
+    ```
+
+    Alternatively, you can run the app via the provided entry point file:
+
+    ```r
+    Rscript app.R
+    ```
 
 ---
 
-## :round_pushpin: Current Status & Roadmap
+## :chart_with_upwards_trend: Project Scope
 
-### Completed
+This project focuses on:
 
-- [X] Strava API integration.
-- [X] Activity data fetching and storage.
-- [X] Basic CSV export functionality.
-- [X] Add athlete statistic & zone data export.
+- **Trend Visualizations:** Plotting pace, heart rate, elevation, distance, and training load trends.
+- **Performance Analysis:** Summarizing performance over time with interactive plots and summary statistics.
+- **Predictive Insights:** Offering basic predictive analysis (e.g., forecasted pace or distance) using historical data.
 
-### In Progress
-
-- [ ] Visual analytics: pace trends, HR trends, distance over time, elevation profiles.
-- [ ] Predictive models for future performance metrics.
-- [ ] Route-based breakdowns and geospatial insights.
-
-### Future Plans: Workout Parser
-
-The next major feature will focus on intelligent workout parsing:
-- Integration with LLMs to parse unstructured workout data.
-- Move beyond fixed-interval workout tracking limitations.
-- Develop smarter analysis using both statistical methods and AI.
+All visualization and modeling components were developed and evaluated as part of the STAT 4580 course requirements.
 
 ---
 
-## :memo: Contributing
+## :white_check_mark: Completed Features
 
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch
-3. Submit a pull request
+- **Strava API Integration:** Seamlessly retrieves activities and athlete data.
+- **Local Data Storage:** Saves processed activity data for subsequent analysis.
+- **Data Export:** Supports CSV and JSON formats.
+- **Interactive Visualizations:** Generates plots and dashboards for pace trends, heart rate zones, power zones, and other performance Metrics.
+- **Shiny Dashboard:** Provides an accessible web interface for exploring your running data.
 
 ---
 
 ## :page_facing_up: License
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+This project is released under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
+
+## :bookmark_tabs: Academic Note
+
+This project was submitted as a final project for **STAT 4580: Data Visualization** in Spring 2025.
