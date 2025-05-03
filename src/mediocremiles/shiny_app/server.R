@@ -5,6 +5,7 @@
 
 
 appServer <- function(input, output, session) {
+  options(DT.options = list(pageLength = 20))
   data_manager <- DataManager()
   
   data_manager$load_data()
@@ -14,6 +15,15 @@ appServer <- function(input, output, session) {
     
     data_manager$filter_activities(input$date_range, input$activity_type)
   })
+  
+  output$download <- downloadHandler(
+    filename = function() {
+      paste0("strava_data_", Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      write.csv(activity_data(), file, row.names = F)
+    }
+  )
   
   observe({
     updateSelectizeInput(
@@ -78,7 +88,6 @@ appServer <- function(input, output, session) {
   })
   
   dashboard_module(input, output, session, activity_data)
-  activities_module(input, output, session, activity_data)
   training_module(input, output, session, activity_data, data_manager)
   trends_module(input, output, session, activity_data)
   settings_module(input, output, session, data_manager)

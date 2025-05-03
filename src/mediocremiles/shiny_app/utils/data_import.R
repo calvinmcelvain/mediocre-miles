@@ -37,8 +37,7 @@ process_strava_data <- function(data_path) {
 process_activities <- function(activities) {
   if (length(activities) == 0) return(data.frame())
   
-  activities_list <- list()
-  splits_list <- list()
+  result_rows <- list()
   
   for (activity_id in names(activities)) {
     activity <- activities[[activity_id]]
@@ -54,19 +53,19 @@ process_activities <- function(activities) {
     }
     
     if (has_splits_data(activity)) {
-      splits_df <- process_splits(activity$splits_standard, activity$id)
-      splits_list[[paste0(activity_id, "_splits")]] <- splits_df
+      split_df <- as.data.frame(activity$splits_standard, stringsAsFactors = F)
+      combined_row <- cbind(activity_df, split_df)
+      result_rows[[length(result_rows) + 1]] <- combined_row[order(-as.numeric(combined_row$split)), ]
+    } else {
+      result_rows[[length(result_rows) + 1]] <- activity_df
     }
-    
-    activities_list[[activity_id]] <- activity_df
   }
   
-  if (length(activities_list) == 0) return(data.frame())
+  if (length(result_rows) == 0) return(data.frame())
   
-  combined_df <- bind_rows(activities_list, .id = "activity_list_id")
+  combined_df <- bind_rows(result_rows)
   
   combined_df <- process_date_columns(combined_df)
-  
   combined_df <- convert_numeric_columns(combined_df)
   
   return(combined_df)
@@ -114,24 +113,6 @@ process_date_columns <- function(df) {
   df$weekday <- wday(df$start_date, label = TRUE)
   
   return(df)
-}
-
-
-process_splits <- function(splits, activity_id) {
-  if (length(splits) == 0) return(data.frame())
-  
-  splits_df <- bind_rows(lapply(splits, function(split) {
-    as.data.frame(t(unlist(split)), stringsAsFactors = FALSE)
-  }))
-  
-
-  colnames(splits_df) <- paste0("split_", colnames(splits_df))
-  splits_df$split_activity_id <- activity_id
-  
-
-  splits_df <- convert_numeric_columns(splits_df)
-  
-  return(splits_df)
 }
 
 
