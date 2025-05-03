@@ -5,8 +5,8 @@ from datetime import datetime
 
 from logger import LoggerManager
 from src.mediocremiles.models.athlete_data import AthleteData
-from strava_client import StravaClient
-from data_processor import DataProcessor
+from src.mediocremiles.strava_client import StravaClient
+from src.mediocremiles.data_processor import DataProcessor
 from utils import get_date_n_days_ago, load_config, load_json_n_validate
 
 
