@@ -30,7 +30,7 @@ tryCatch({
 
 
 # Default data path
-DEFAULT_DATA_PATH <- "data/strava_data.json"
+DEFAULT_DATA_PATH <- "data/demo.json"
 
 
 source_files <- c(
