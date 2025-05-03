@@ -8,10 +8,10 @@ import logging.config
 from typing import Dict
 from pathlib import Path
 
-from src.mediocremiles.utils import load_config
+from utils import load_config
 
 
-LOGGER_CONFIGS = load_config("logger.json")
+LOGGER_CONFIGS = load_config("configs/logger.json")
 
 
 # Setting levels of nuciance loggers.

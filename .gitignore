@@ -14,3 +14,9 @@ __pycache__/
 
 # Ignore log files.
 logs/
+
+# Ignore R History
+*.Rhistory
+
+# Ignore mac's dumb stupid dumb thing
+*.DS_Store

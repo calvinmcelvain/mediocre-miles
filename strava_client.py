@@ -15,7 +15,7 @@ from stravalib.strava_model import Zones
 from datetime import datetime
 
 from src.mediocremiles.models.activity import ActivityModel
-from src.mediocremiles.utils import load_config, load_envs
+from utils import load_config, load_envs
 
 
 log = logging.getLogger("app.strava_client")

@@ -4,7 +4,7 @@ Contains the AthleteStatistics & ActivityTotal models.
 from typing import Any, Optional
 from datetime import datetime
 
-from src.mediocremiles.utils import convert_distance
+from utils import convert_distance
 from stravalib.model import AthleteStats
 from pydantic import BaseModel, computed_field
 
