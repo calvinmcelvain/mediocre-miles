@@ -1,6 +1,9 @@
 # Strava token.
 strava_token.json
 
+# Ignore all files in the /data directory
+data/*
+
 # Keep the /data directory
 !data/.gitkeep
 
