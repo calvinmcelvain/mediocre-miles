@@ -117,24 +117,29 @@ generate_distance_trend_plot <- function(data, plot_theme) {
 
 generate_seasonal_patterns_plot <- function(data, plot_theme, plot_colors) {
   monthly_stats <- data %>%
-    mutate(month = month(start_date, label = T)) %>%
+    mutate(
+      year = year(start_date),
+      month = month(start_date, label = T)) %>%
     distinct(id, .keep_all = T) %>%
+    group_by(year, month) %>%
+    summarize(
+      monthly_total_distance = sum(distance_miles, na.rm = T),
+      monthly_elevation_gain = sum(elevation_gain_feet, na.rm = T),
+      .groups = "drop") %>%
     group_by(month) %>%
     summarize(
-      avg_distance = mean(distance_miles, na.rm = T),
-      avg_time = mean(moving_time_hours, na.rm = T),
-      avg_elevation = mean(elevation_gain_feet, na.rm = T),
-      activity_count = n(),
+      avg_monthly_distance = mean(monthly_total_distance, na.rm = T),
+      avg_elevation_gain = mean(monthly_elevation_gain, na.rm = T),
       .groups = "drop")
   
   pp <- ggplot(monthly_stats, aes(x = month)) +
-    geom_line(aes(y = avg_elevation, color = "Avg Elevation (feet)", text = paste0(
+    geom_line(aes(y = avg_elevation_gain, color = "Avg Elevation (feet)", text = paste0(
       "Month: ", month,
-      "<br>Average Elevation Gain: ", round(avg_elevation, 2), " feet"
+      "<br>Average Elevation Gain: ", round(avg_elevation_gain, 2), " feet"
     )), group = 1, linewidth=1) +
-    geom_bar(aes(y = avg_distance * 10, fill = "Avg Distance (miles)", text = paste0(
+    geom_bar(aes(y = avg_monthly_distance * 10, fill = "Avg Distance (miles)", text = paste0(
       "Month: ", month,
-      "<br>Average Distance: ", round(avg_distance, 2), " miles"
+      "<br>Average Distance: ", round(avg_monthly_distance, 2), " miles"
     )), stat = "identity", alpha = 0.9) +
     scale_fill_manual(values = c("Avg Distance (miles)" = plot_colors[4])) +
     scale_color_manual(values = c("Avg Elevation (feet)" = plot_colors[1])) +

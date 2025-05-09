@@ -68,7 +68,7 @@ generate_hr_zones_plot <- function(data, plot_theme, plot_colors) {
   
   pp <- ggplot(activities_summary, aes(x = date, y = distance_miles)) +
     geom_point(aes(
-      size = distance_miles * 1.5,
+      size = distance_miles,
       color = average_heartrate,
       text = paste(
         "Activity: ", name,
@@ -78,8 +78,7 @@ generate_hr_zones_plot <- function(data, plot_theme, plot_colors) {
         "<br>Avg HR: ", round(average_heartrate, 1), "bpm",
         "<br>Elevation: ", round(elevation_gain_feet, 1), "feet")), alpha = 0.8) +
     scale_color_viridis_c(name = "Avg HR (bpm)", option = "viridis") +
-    guides(color = "none") +
-    labs(x = NULL, y = "Distance (miles)") +
+    labs(x = NULL, y = "Distance (miles)", color = "Average Heartrate", size = "Distance") +
     plot_theme
   
   p <- ggplotly(pp, tooltip = "text") %>%
@@ -110,7 +109,7 @@ generate_power_zones_plot <- function(data, plot_theme, plot_colors) {
   pp <- ggplot(power_data, aes(x = average_heartrate, y = weighted_average_power)) +
     geom_jitter(mapping = aes(text = paste0(
       "Heartrate: ", round(average_heartrate, 2), " bpm",
-      "<br>Speed: ", round(weighted_average_power, 2), " mph"
+      "<br>Power: ", round(weighted_average_power, 2), " watts"
     )), height = 0.5, color = plot_colors[4], alpha = 0.8, size = 1) +
     geom_smooth(se = T, fill = plot_colors[4], color = "black") + 
     guides(fill = "none") +
@@ -153,11 +152,11 @@ generate_training_summary_plot <- function(data, plot_theme, plot_colors) {
     geom_bar(mapping = aes(text = paste0(
       "Date: ", after_stat(x),
       "<br>Trainging Load: ", round(after_stat(y), 2)
-    )), stat = "identity", fill = plot_colors[2], alpha = 0.7) +
-    geom_line(mapping = aes(group = 1, text = paste0(
+    )), stat = "identity", fill = plot_colors[4], alpha = 0.7) +
+    geom_smooth(mapping = aes(text = paste0(
       "Date: ", after_stat(x),
-      "<br>Trainging Load: ", round(after_stat(y), 2)
-    )), color = plot_colors[5], linewidth = 0.9) +
+      "<br>Trending Load: ", round(after_stat(y), 2)
+    )), color = plot_colors[5], linewidth = 0.9, se = T, fill = plot_colors[5]) +
     labs(x = NULL, y = "Training Load") +
     plot_theme +
     scale_x_date(date_breaks = "2 weeks", date_labels = "%b %d",
