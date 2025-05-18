@@ -20,7 +20,7 @@ For questions, please contact **Calvin McElvain** at [mcelvain@hotmail.com](mail
 1. **Clone the repository:**
 
     ```bash
-    git clone https://github.com/your-username/mediocre-miles.git
+    git clone https://github.com/calvin-mcelvain/mediocre-miles.git
     cd mediocre-miles
     ```
 
